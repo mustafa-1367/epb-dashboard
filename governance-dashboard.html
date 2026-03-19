@@ -1,0 +1,3471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>e-Participatory Budgeting - Blockchain Citizen Dashboard</title>
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1a2235;
+            --bg-card-hover: #1f2a40;
+            --border: #2a3a5c;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-yellow: #f59e0b;
+            --accent-purple: #8b5cf6;
+            --accent-cyan: #06b6d4;
+            --accent-teal: #14b8a6;
+            --accent-orange: #f97316;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+        }
+
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+
+        .logo {
+            width: 44px; height: 44px;
+            background: linear-gradient(135deg, var(--accent-teal), var(--accent-blue));
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 1.1rem;
+            color: white;
+            letter-spacing: -0.5px;
+        }
+
+        .header-title h1 { font-size: 1.2rem; font-weight: 700; line-height: 1.2; }
+        .header-title h1 span { color: var(--accent-teal); }
+        .header-subtitle {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+        }
+
+        .header-right { display: flex; align-items: center; gap: 1rem; }
+
+        .chain-status {
+            display: flex; align-items: center; gap: 0.5rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 0.4rem 0.8rem; border-radius: 20px;
+            font-size: 0.78rem; color: var(--accent-green);
+        }
+
+        .pulse {
+            width: 8px; height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+        }
+
+        .wallet-btn {
+            display: flex; align-items: center; gap: 0.4rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border: none; border-radius: 20px;
+            padding: 0.45rem 1rem;
+            color: white; font-size: 0.8rem; font-weight: 600;
+            cursor: pointer; transition: opacity 0.2s;
+        }
+
+        .wallet-btn:hover { opacity: 0.9; }
+
+        .wallet-btn.connected {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: var(--accent-green);
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex; gap: 0.25rem;
+            background: var(--bg-secondary);
+            padding: 0.5rem 2rem;
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            border: none; background: none;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .nav-tab:hover { background: var(--bg-card); color: var(--text-primary); }
+        .nav-tab.active {
+            background: var(--accent-blue);
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main { padding: 1.5rem 2rem; max-width: 1480px; margin: 0 auto; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 1rem; margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-blue);
+        }
+
+        .stat-label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.7rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-teal), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-change { font-size: 0.75rem; margin-top: 0.3rem; }
+        .stat-change.up { color: var(--accent-green); }
+        .stat-change.down { color: var(--accent-red); }
+
+        /* Cards & Tables */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .card-title { font-size: 1rem; font-weight: 600; }
+        .card-body { padding: 1.25rem; }
+
+        table { width: 100%; border-collapse: collapse; }
+
+        th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            position: sticky; top: 0;
+            background: var(--bg-card);
+        }
+
+        td {
+            padding: 0.85rem 1rem;
+            font-size: 0.875rem;
+            border-bottom: 1px solid rgba(42, 58, 92, 0.5);
+            vertical-align: middle;
+        }
+
+        tr:hover td { background: var(--bg-card-hover); }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-active, .badge-voting { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+        .badge-discussion { background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); }
+        .badge-approved { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
+        .badge-rejected { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
+        .badge-pending, .badge-review { background: rgba(245, 158, 11, 0.15); color: var(--accent-yellow); }
+        .badge-funded { background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); }
+        .badge-completed { background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); }
+        .badge-infrastructure { background: rgba(59, 130, 246, 0.12); color: var(--accent-blue); }
+        .badge-education { background: rgba(139, 92, 246, 0.12); color: var(--accent-purple); }
+        .badge-healthcare { background: rgba(16, 185, 129, 0.12); color: var(--accent-green); }
+        .badge-parks { background: rgba(20, 184, 166, 0.12); color: var(--accent-teal); }
+        .badge-safety { background: rgba(239, 68, 68, 0.12); color: var(--accent-red); }
+        .badge-transport { background: rgba(245, 158, 11, 0.12); color: var(--accent-yellow); }
+        .badge-culture { background: rgba(249, 115, 22, 0.12); color: var(--accent-orange); }
+        .badge-housing { background: rgba(6, 182, 212, 0.12); color: var(--accent-cyan); }
+
+        /* Vote Bar */
+        .vote-bar-container { width: 100%; margin: 0.25rem 0; }
+        .vote-bar {
+            height: 10px;
+            border-radius: 5px;
+            background: var(--bg-primary);
+            overflow: hidden;
+            display: flex;
+        }
+
+        .vote-bar .for { background: var(--accent-green); transition: width 0.5s; }
+        .vote-bar .against { background: var(--accent-red); transition: width 0.5s; }
+        .vote-bar .abstain { background: var(--text-muted); transition: width 0.5s; }
+
+        .vote-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* TX Hash */
+        .tx-hash {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.78rem;
+            color: var(--accent-cyan);
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .tx-hash:hover { text-decoration: underline; }
+
+        /* Progress Bars */
+        .progress-container {
+            background: var(--bg-primary);
+            border-radius: 6px;
+            height: 10px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.8s ease;
+        }
+
+        /* Grid Layouts */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; }
+
+        /* Timeline */
+        .timeline { position: relative; padding-left: 2rem; }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px; top: 0; bottom: 0;
+            width: 2px;
+            background: var(--border);
+        }
+
+        .timeline-item { position: relative; padding-bottom: 1.5rem; }
+
+        .timeline-dot {
+            position: absolute;
+            left: -1.65rem; top: 0.3rem;
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            border: 2px solid var(--accent-blue);
+            background: var(--bg-primary);
+        }
+
+        .timeline-dot.green { border-color: var(--accent-green); }
+        .timeline-dot.red { border-color: var(--accent-red); }
+        .timeline-dot.yellow { border-color: var(--accent-yellow); }
+        .timeline-dot.purple { border-color: var(--accent-purple); }
+        .timeline-dot.teal { border-color: var(--accent-teal); }
+
+        .timeline-date { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.2rem; }
+        .timeline-title { font-size: 0.9rem; font-weight: 600; }
+        .timeline-desc { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem; }
+
+        /* Filters */
+        .filters { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+
+        .filter-select, .filter-input {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.45rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+        }
+
+        .filter-select:focus, .filter-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary { background: var(--accent-blue); color: white; }
+        .btn-primary:hover { background: #2563eb; }
+
+        .btn-success { background: var(--accent-green); color: white; }
+        .btn-success:hover { background: #059669; }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--accent-blue);
+            color: var(--text-primary);
+        }
+
+        .btn-vote {
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            border: 1px solid;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: transparent;
+        }
+
+        .btn-vote.for { border-color: var(--accent-green); color: var(--accent-green); }
+        .btn-vote.for:hover { background: rgba(16,185,129,0.15); }
+        .btn-vote.against { border-color: var(--accent-red); color: var(--accent-red); }
+        .btn-vote.against:hover { background: rgba(239,68,68,0.15); }
+        .btn-vote.abstain { border-color: var(--text-muted); color: var(--text-muted); }
+        .btn-vote.abstain:hover { background: rgba(100,116,139,0.15); }
+
+        /* Donut Chart */
+        .donut-container {
+            display: flex; align-items: center; gap: 2rem;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .donut {
+            width: 170px; height: 170px;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .donut-center {
+            position: absolute;
+            inset: 30px;
+            background: var(--bg-card);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .donut-center .value { font-size: 1.4rem; font-weight: 700; }
+        .donut-center .label { font-size: 0.62rem; color: var(--text-muted); text-align: center; }
+
+        .legend { display: flex; flex-direction: column; gap: 0.5rem; }
+        .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+        /* Allocation bar */
+        .alloc-bar {
+            display: flex;
+            height: 32px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .alloc-segment {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: white;
+            transition: width 0.5s;
+        }
+
+        /* Immutable record indicator */
+        .immutable-icon {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.7rem;
+            color: var(--accent-green);
+        }
+
+        .immutable-icon::before { content: '\1F512'; font-size: 0.65rem; }
+
+        /* Scrollable table wrapper */
+        .table-scroll { overflow-x: auto; }
+
+        /* Search */
+        .search-box { position: relative; }
+
+        .search-box input {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.5rem 0.75rem 0.5rem 2rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            width: 220px;
+        }
+
+        .search-box::before {
+            content: '\2315';
+            position: absolute;
+            left: 0.6rem; top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        /* Form styles */
+        .form-group { margin-bottom: 1.25rem; }
+        .form-label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            color: var(--text-secondary);
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.6rem 0.85rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-family: inherit;
+        }
+
+        .form-textarea { resize: vertical; min-height: 100px; }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+        }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+        .form-hint { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.25rem; }
+
+        /* Citizen card */
+        .citizen-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.78rem;
+        }
+
+        .citizen-avatar {
+            width: 24px; height: 24px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.6rem; font-weight: 700;
+            color: white;
+        }
+
+        /* District tag */
+        .district-tag {
+            font-size: 0.7rem;
+            padding: 0.15rem 0.45rem;
+            border-radius: 4px;
+            background: rgba(59,130,246,0.1);
+            color: var(--accent-blue);
+        }
+
+        /* Budget slider */
+        .budget-slider-row {
+            display: flex; align-items: center; gap: 1rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(42,58,92,0.3);
+        }
+
+        .budget-slider-label { min-width: 140px; font-size: 0.85rem; font-weight: 600; }
+        .budget-slider-bar { flex: 1; }
+
+        .budget-slider-bar input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--bg-primary);
+            outline: none;
+        }
+
+        .budget-slider-bar input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            cursor: pointer;
+            border: 2px solid white;
+        }
+
+        .budget-slider-value {
+            min-width: 70px;
+            text-align: right;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .budget-slider-pct {
+            min-width: 45px;
+            text-align: right;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .main { padding: 1rem; }
+            .header { padding: 0.75rem 1rem; flex-wrap: wrap; gap: 0.5rem; }
+            .nav-tabs { padding: 0.5rem 1rem; }
+            .form-row { grid-template-columns: 1fr; }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in { animation: fadeIn 0.3s ease forwards; }
+
+        /* Audit log styles */
+        .audit-entry {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 0.85rem 0;
+            border-bottom: 1px solid rgba(42, 58, 92, 0.4);
+        }
+
+        .audit-type {
+            min-width: 80px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            padding-top: 0.15rem;
+        }
+
+        .audit-details { flex: 1; }
+        .audit-msg { font-size: 0.85rem; }
+        .audit-meta { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.2rem; }
+
+        /* Notification toast */
+        .toast {
+            position: fixed;
+            bottom: 2rem; right: 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--accent-green);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            z-index: 200;
+            display: none;
+            animation: fadeIn 0.3s ease forwards;
+            max-width: 380px;
+        }
+
+        .toast.show { display: block; }
+
+        /* Modal overlay */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 150;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.show { display: flex; }
+
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .modal h2 { font-size: 1.1rem; margin-bottom: 0.3rem; }
+        .modal .subtitle { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+
+        /* Role Selector */
+        .role-selector {
+            display: flex; gap: 0.4rem; align-items: center;
+        }
+        .role-btn {
+            padding: 0.3rem 0.7rem; border-radius: 6px; border: 1px solid var(--border);
+            background: transparent; color: var(--text-muted); font-size: 0.72rem;
+            font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+        .role-btn:hover { border-color: var(--accent-blue); color: var(--text-primary); }
+        .role-btn.active-role { border-color: var(--accent-green); color: var(--accent-green); background: rgba(16,185,129,0.1); }
+        .role-btn.govt { border-color: var(--accent-purple); color: var(--accent-purple); }
+        .role-btn.expert { border-color: var(--accent-yellow); color: var(--accent-yellow); }
+        .role-indicator {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.68rem;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .role-indicator.government { background: rgba(139,92,246,0.15); color: var(--accent-purple); }
+        .role-indicator.citizen { background: rgba(16,185,129,0.15); color: var(--accent-green); }
+        .role-indicator.expert { background: rgba(245,158,11,0.15); color: var(--accent-yellow); }
+
+        /* Phase Badge */
+        .phase-badge {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.68rem;
+            font-weight: 600;
+        }
+        .phase-badge.phase-1 { background: rgba(139,92,246,0.15); color: var(--accent-purple); }
+        .phase-badge.phase-2 { background: rgba(59,130,246,0.15); color: var(--accent-blue); }
+        .phase-badge.phase-3 { background: rgba(6,182,212,0.15); color: var(--accent-cyan); }
+        .phase-badge.phase-4 { background: rgba(245,158,11,0.15); color: var(--accent-yellow); }
+        .phase-badge.phase-5 { background: rgba(16,185,129,0.15); color: var(--accent-green); }
+        .phase-badge.phase-6 { background: rgba(249,115,22,0.15); color: var(--accent-orange); }
+        .phase-badge.phase-7 { background: rgba(236,72,153,0.15); color: #ec4899; }
+
+        /* Discussion */
+        .comment-card {
+            background: var(--bg-primary); border-radius: 8px; padding: 1rem;
+            margin-bottom: 0.75rem; border-left: 3px solid var(--border);
+        }
+        .comment-card .comment-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .comment-card .comment-body { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
+        .like-btn {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.25rem 0.6rem; border-radius: 6px; border: 1px solid var(--border);
+            background: transparent; color: var(--text-muted); font-size: 0.75rem;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .like-btn:hover, .like-btn.liked { border-color: var(--accent-blue); color: var(--accent-blue); background: rgba(59,130,246,0.1); }
+
+        /* Expert Review */
+        .review-card {
+            background: var(--bg-primary); border-radius: 10px; padding: 1.25rem;
+            margin-bottom: 1rem; border: 1px solid var(--border);
+        }
+        .review-card.approved { border-left: 4px solid var(--accent-green); }
+        .review-card.rejected { border-left: 4px solid var(--accent-red); }
+        .review-card.pending-review { border-left: 4px solid var(--accent-yellow); }
+
+        /* Star Rating */
+        .star-rating { display: inline-flex; gap: 0.2rem; cursor: pointer; }
+        .star-rating .star {
+            font-size: 1.4rem; color: var(--border); transition: color 0.15s; cursor: pointer;
+        }
+        .star-rating .star.filled { color: #f59e0b; }
+        .star-rating .star:hover { color: #fbbf24; }
+
+        /* Feedback Card */
+        .feedback-card {
+            background: var(--bg-primary); border-radius: 8px; padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        /* Phase Flow */
+        .phase-flow {
+            display: flex; gap: 0; margin-bottom: 1.5rem; overflow-x: auto;
+        }
+        .phase-step {
+            flex: 1; text-align: center; padding: 0.6rem 0.5rem;
+            position: relative; min-width: 100px;
+        }
+        .phase-step::after {
+            content: ''; position: absolute; right: 0; top: 50%;
+            transform: translateY(-50%); width: 0; height: 0;
+            border-top: 8px solid transparent; border-bottom: 8px solid transparent;
+            border-left: 8px solid var(--border);
+        }
+        .phase-step:last-child::after { display: none; }
+        .phase-step .phase-num {
+            font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+            color: var(--text-muted); margin-bottom: 0.2rem;
+        }
+        .phase-step .phase-name { font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); }
+        .phase-step.current { background: rgba(59,130,246,0.1); border-radius: 8px; }
+        .phase-step.current .phase-name { color: var(--accent-blue); }
+        .phase-step.completed-phase { background: rgba(16,185,129,0.08); border-radius: 8px; }
+        .phase-step.completed-phase .phase-name { color: var(--accent-green); }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+    <div class="header-left">
+        <div class="logo">ePB</div>
+        <div class="header-title">
+            <h1>e-Participatory <span>Budgeting</span></h1>
+            <div class="header-subtitle">BLOCKCHAIN-POWERED CITIZEN BUDGET PLATFORM</div>
+        </div>
+    </div>
+    <div class="header-right">
+        <div class="chain-status">
+            <span class="pulse"></span>
+            <span>Polygon PoS</span>
+            <span style="color:var(--text-muted);">Block #<span id="blockNumber">58,214,773</span></span>
+        </div>
+        <div class="search-box">
+            <input type="text" placeholder="Search proposals, citizens..." id="globalSearch">
+        </div>
+        <div class="role-selector" id="roleSelector" style="display:none;">
+            <button class="role-btn active-role" onclick="switchRole('citizen')" id="roleCitizen">Citizen</button>
+            <button class="role-btn" onclick="switchRole('government')" id="roleGovernment">Gov</button>
+            <button class="role-btn" onclick="switchRole('expert')" id="roleExpert">Expert</button>
+        </div>
+        <span class="role-indicator citizen" id="roleIndicator" style="display:none;">Citizen</span>
+        <button class="wallet-btn" id="walletBtn" onclick="connectWallet()">Connect Wallet</button>
+    </div>
+</header>
+
+<!-- Navigation -->
+<nav class="nav-tabs">
+    <button class="nav-tab active" data-tab="overview">Dashboard</button>
+    <button class="nav-tab" data-tab="submit">Submit Proposal</button>
+    <button class="nav-tab" data-tab="proposals">All Proposals</button>
+    <button class="nav-tab" data-tab="discussion">Discussion</button>
+    <button class="nav-tab" data-tab="expert">Expert Review</button>
+    <button class="nav-tab" data-tab="votes">Vote & Allocate</button>
+    <button class="nav-tab" data-tab="budget">City Budget</button>
+    <button class="nav-tab" data-tab="lifecycle">Implementation</button>
+    <button class="nav-tab" data-tab="feedback">Feedback</button>
+    <button class="nav-tab" data-tab="demographics">Demographics</button>
+    <button class="nav-tab" data-tab="audit">Audit Dashboard</button>
+</nav>
+
+<!-- Main Content -->
+<main class="main">
+
+    <!-- ========== OVERVIEW TAB ========== -->
+    <div class="tab-content active" id="tab-overview">
+        <div class="stats-row fade-in">
+            <div class="stat-card">
+                <div class="stat-label">Citizen Proposals</div>
+                <div class="stat-value" id="statProposals">1</div>
+                <div class="stat-change up">Submit yours below</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Active Votes</div>
+                <div class="stat-value" id="statActiveVotes">1</div>
+                <div class="stat-change up">Voting open now</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">City Budget Pool</div>
+                <div class="stat-value" id="statBudgetPool">$4.8M</div>
+                <div class="stat-change down">FY 2026 Cycle 1</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Registered Citizens</div>
+                <div class="stat-value">15,947</div>
+                <div class="stat-change up">+1,203 this month</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Citizen Participation</div>
+                <div class="stat-value">73.2%</div>
+                <div class="stat-change up">+8.4% from last cycle</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">On-Chain Records</div>
+                <div class="stat-value" id="statRecords">3</div>
+                <div class="immutable-icon" style="margin-top:0.3rem;">Immutable</div>
+            </div>
+        </div>
+
+        <!-- Government Budget Determination Panel (Phase 1) - visible when govt role -->
+        <div class="card fade-in" id="govBudgetPanel" style="display:none;">
+            <div class="card-header">
+                <span class="card-title">Phase 1: Budget Determination</span>
+                <span class="role-indicator government">Government Access</span>
+            </div>
+            <div class="card-body">
+                <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem;">
+                    Set the total participatory budget for the current cycle. This amount will be recorded on-chain and made available for citizen proposals.
+                </p>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Total Participatory Budget (EUR)</label>
+                        <input type="number" class="form-input" id="govBudgetAmount" value="4800000" min="100000" step="100000">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fiscal Year / Cycle</label>
+                        <input type="text" class="form-input" id="govBudgetCycle" value="FY 2026 Cycle 1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Budget Justification</label>
+                    <textarea class="form-textarea" id="govBudgetJustification" placeholder="Reason for budget amount..." style="min-height:60px;"></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="setBudget()">Set Budget On-Chain</button>
+                <span style="font-size:0.75rem;color:var(--text-muted);margin-left:0.75rem;" id="budgetSetStatus"></span>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <!-- Recent Citizen Proposals -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <span class="card-title">Latest Citizen Proposals</span>
+                    <button class="btn btn-outline" onclick="switchTab('proposals')">View All</button>
+                </div>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Proposal</th>
+                                <th>Citizen</th>
+                                <th>District</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentProposalsTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Budget Allocation Donut -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <span class="card-title">Budget Allocation by Category</span>
+                    <button class="btn btn-outline" onclick="switchTab('budget')">Details</button>
+                </div>
+                <div class="card-body">
+                    <div class="donut-container">
+                        <div class="donut" id="donutChart"></div>
+                        <div class="legend" id="donutLegend"></div>
+                    </div>
+                    <div class="alloc-bar" id="allocBar"></div>
+                    <div style="display:flex;justify-content:space-between;margin-top:0.5rem;">
+                        <span style="font-size:0.72rem;color:var(--text-muted);">Citizen-Voted Allocation: $3.2M</span>
+                        <span style="font-size:0.72rem;color:var(--text-muted);">Remaining Pool: $1.6M</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Vote Tallies -->
+        <div class="card fade-in">
+            <div class="card-header">
+                <span class="card-title">Live Citizen Voting</span>
+                <span class="immutable-icon">On-Chain Verified</span>
+            </div>
+            <div class="card-body" id="liveVoteTallies"></div>
+        </div>
+
+        <!-- Participation by District -->
+        <div class="card fade-in">
+            <div class="card-header">
+                <span class="card-title">Citizen Participation by District</span>
+            </div>
+            <div class="card-body" id="districtParticipation"></div>
+        </div>
+    </div>
+
+    <!-- ========== SUBMIT PROPOSAL TAB ========== -->
+    <div class="tab-content" id="tab-submit">
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Submit a New Citizen Proposal</span>
+                    <span class="immutable-icon">Recorded On-Chain</span>
+                </div>
+                <div class="card-body">
+                    <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1.5rem;">
+                        As a registered citizen, you can submit proposals for how public funds should be spent in your community.
+                        Each proposal is permanently recorded on the blockchain for full transparency and public audit.
+                    </p>
+                    <form id="proposalForm" onsubmit="submitProposal(event)">
+                        <div class="form-group">
+                            <label class="form-label">Proposal Title</label>
+                            <input type="text" class="form-input" id="propTitle" placeholder="e.g., New Playground at Riverside Park" required>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Category</label>
+                                <select class="form-select" id="propCategory" required>
+                                    <option value="">Select category...</option>
+                                    <option value="infrastructure">Infrastructure & Roads</option>
+                                    <option value="education">Education & Schools</option>
+                                    <option value="healthcare">Healthcare & Clinics</option>
+                                    <option value="parks">Parks & Recreation</option>
+                                    <option value="safety">Public Safety</option>
+                                    <option value="transport">Public Transport</option>
+                                    <option value="culture">Arts & Culture</option>
+                                    <option value="housing">Housing & Shelters</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">District</label>
+                                <select class="form-select" id="propDistrict" required>
+                                    <option value="">Select county...</option>
+                                    <option value="Harju">Harju maakond</option>
+                                    <option value="Hiiu">Hiiu maakond</option>
+                                    <option value="Ida-Viru">Ida-Viru maakond</option>
+                                    <option value="Jogeva">Jõgeva maakond</option>
+                                    <option value="Jarva">Järva maakond</option>
+                                    <option value="Laane">Lääne maakond</option>
+                                    <option value="Laane-Viru">Lääne-Viru maakond</option>
+                                    <option value="Polva">Põlva maakond</option>
+                                    <option value="Parnu">Pärnu maakond</option>
+                                    <option value="Rapla">Rapla maakond</option>
+                                    <option value="Saare">Saare maakond</option>
+                                    <option value="Tartu">Tartu maakond</option>
+                                    <option value="Valga">Valga maakond</option>
+                                    <option value="Viljandi">Viljandi maakond</option>
+                                    <option value="Voru">Võru maakond</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-textarea" id="propDescription" placeholder="Describe your proposal in detail: what problem it solves, who benefits, and expected outcomes..." required></textarea>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Requested Budget</label>
+                                <input type="number" class="form-input" id="propBudget" placeholder="e.g., 150000" min="1000" max="500000" required>
+                                <div class="form-hint">Min: $1,000 - Max: $500,000 per proposal</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Estimated Timeline</label>
+                                <select class="form-select" id="propTimeline" required>
+                                    <option value="">Select timeline...</option>
+                                    <option value="3m">3 months</option>
+                                    <option value="6m">6 months</option>
+                                    <option value="12m">12 months</option>
+                                    <option value="18m">18 months</option>
+                                    <option value="24m">24 months</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Beneficiary Address or Community Group</label>
+                            <input type="text" class="form-input" id="propBeneficiary" placeholder="e.g., Riverside Community Center or 0x...">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Your Age</label>
+                                <input type="number" class="form-input" id="propAge" placeholder="Must be 14 or older" min="14" max="120" required>
+                                <div class="form-hint">Minimum age: 14 years (Estonian e-PB eligibility)</div>
+                            </div>
+                            <div class="form-group" style="display:flex;flex-direction:column;justify-content:center;">
+                                <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.85rem;color:var(--text-secondary);">
+                                    <input type="checkbox" id="propAnonymous" style="width:18px;height:18px;accent-color:var(--accent-blue);">
+                                    Submit anonymously
+                                </label>
+                                <div class="form-hint">Your identity will be hidden but demographics preserved for statistics</div>
+                            </div>
+                        </div>
+
+                        <div style="display:flex;align-items:center;gap:0.75rem;margin-top:1.5rem;">
+                            <button type="submit" class="btn btn-success" style="padding:0.65rem 2rem;font-size:0.9rem;">Submit Proposal On-Chain</button>
+                            <span style="font-size:0.75rem;color:var(--text-muted);">Gas fee: ~0.002 MATIC</span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Submission Guidelines -->
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">How It Works</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-dot purple"></div>
+                                <div class="timeline-title">Phase 1: Budget Determination</div>
+                                <div class="timeline-desc">Government defines the total participatory budget and records it on-chain.</div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-dot teal"></div>
+                                <div class="timeline-title">Phase 2: Idea Submission</div>
+                                <div class="timeline-desc">Citizens (age 14+, verified residents) submit proposals. Each gets a unique project ID on-chain.</div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-title">Phase 3: Public Discussion</div>
+                                <div class="timeline-desc">Citizens discuss, like, and comment on proposals. All interactions recorded on-chain.</div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-dot yellow"></div>
+                                <div class="timeline-title">Phase 4: Expert Evaluation</div>
+                                <div class="timeline-desc">Verified experts review feasibility and approve or reject with justification.</div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-dot green"></div>
+                                <div class="timeline-title">Phase 5: Citizen Voting (14 days)</div>
+                                <div class="timeline-desc">All registered citizens vote on-chain. Each citizen gets one vote per proposal. Budget allocation votes determine funding priority.</div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-dot purple"></div>
+                                <div class="timeline-title">Phase 6: Implementation</div>
+                                <div class="timeline-desc">City council approves. Funds disbursed via smart contract. Progress tracked on-chain with milestones.</div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-title">Phase 7: Feedback Gathering</div>
+                                <div class="timeline-desc">Post-implementation citizen ratings (1-5) and comments recorded on-chain for accountability.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Your Citizen Profile</span>
+                    </div>
+                    <div class="card-body" id="citizenProfile">
+                        <div style="text-align:center;padding:1.5rem;color:var(--text-muted);">
+                            <p style="font-size:0.9rem;margin-bottom:0.75rem;">Connect your wallet to view your citizen profile</p>
+                            <button class="btn btn-primary" onclick="connectWallet()">Connect Wallet</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== PROPOSALS TAB ========== -->
+    <div class="tab-content" id="tab-proposals">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">All Citizen Proposals (On-Chain Registry)</span>
+                <div class="filters">
+                    <select class="filter-select" id="proposalStatusFilter" onchange="renderProposals()">
+                        <option value="all">All Status</option>
+                        <option value="discussion">Discussion (Phase 3)</option>
+                        <option value="review">Expert Review (Phase 4)</option>
+                        <option value="voting">Open for Voting (Phase 5)</option>
+                        <option value="approved">Approved</option>
+                        <option value="funded">Funded</option>
+                        <option value="completed">Completed</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                    <select class="filter-select" id="proposalCategoryFilter" onchange="renderProposals()">
+                        <option value="all">All Categories</option>
+                        <option value="infrastructure">Infrastructure</option>
+                        <option value="education">Education</option>
+                        <option value="healthcare">Healthcare</option>
+                        <option value="parks">Parks & Rec</option>
+                        <option value="safety">Public Safety</option>
+                        <option value="transport">Transport</option>
+                        <option value="culture">Arts & Culture</option>
+                        <option value="housing">Housing</option>
+                    </select>
+                    <select class="filter-select" id="proposalDistrictFilter" onchange="renderProposals()">
+                        <option value="all">All Counties</option>
+                        <option value="Harju">Harju</option>
+                        <option value="Hiiu">Hiiu</option>
+                        <option value="Ida-Viru">Ida-Viru</option>
+                        <option value="Jogeva">Jõgeva</option>
+                        <option value="Jarva">Järva</option>
+                        <option value="Laane">Lääne</option>
+                        <option value="Laane-Viru">Lääne-Viru</option>
+                        <option value="Polva">Põlva</option>
+                        <option value="Parnu">Pärnu</option>
+                        <option value="Rapla">Rapla</option>
+                        <option value="Saare">Saare</option>
+                        <option value="Tartu">Tartu</option>
+                        <option value="Valga">Valga</option>
+                        <option value="Viljandi">Viljandi</option>
+                        <option value="Voru">Võru</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Proposal</th>
+                            <th>Category</th>
+                            <th>Submitted By</th>
+                            <th>District</th>
+                            <th>Budget</th>
+                            <th>Status</th>
+                            <th>Vote Tally</th>
+                            <th>TX Hash</th>
+                            <th>Record</th>
+                        </tr>
+                    </thead>
+                    <tbody id="proposalsTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== VOTES TAB ========== -->
+    <div class="tab-content" id="tab-votes">
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-label">Total Votes Cast</div>
+                <div class="stat-value" id="statTotalVotes">1</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Citizen Participation</div>
+                <div class="stat-value" id="statParticipation">67%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Proposals Approved</div>
+                <div class="stat-value" id="statApproved">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Budget Votes Active</div>
+                <div class="stat-value" id="statBudgetVotes">1</div>
+            </div>
+        </div>
+
+        <!-- Active Voting -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Active Citizen Votes - Cast Your Vote On-Chain</span>
+                <span class="immutable-icon">1 Citizen = 1 Vote</span>
+            </div>
+            <div class="card-body" id="activeVoting"></div>
+        </div>
+
+        <!-- Budget Allocation Voting -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Budget Priority Voting - Allocate Funds On-Chain</span>
+                <span class="immutable-icon">Transparent Allocation</span>
+            </div>
+            <div class="card-body">
+                <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem;">
+                    Distribute your budget vote across categories. Your allocation preferences are recorded on-chain and aggregated transparently.
+                </p>
+                <div id="budgetSliders"></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border);">
+                    <span style="font-size:0.85rem;" id="budgetTotalLabel">Total: 100%</span>
+                    <button class="btn btn-success" onclick="submitBudgetVote()">Submit Budget Vote On-Chain</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vote Records -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Transparent Vote Records</span>
+                <span class="immutable-icon">Immutable On-Chain</span>
+            </div>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Proposal</th>
+                            <th>For</th>
+                            <th>Against</th>
+                            <th>Abstain</th>
+                            <th>Participation</th>
+                            <th>Result</th>
+                            <th>Tally Bar</th>
+                            <th>TX Hash</th>
+                        </tr>
+                    </thead>
+                    <tbody id="votesTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Individual Vote Ledger -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Individual Citizen Vote Ledger (Public Auditability)</span>
+            </div>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Citizen</th>
+                            <th>District</th>
+                            <th>Proposal</th>
+                            <th>Vote</th>
+                            <th>Timestamp</th>
+                            <th>TX Hash</th>
+                        </tr>
+                    </thead>
+                    <tbody id="individualVotesTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== BUDGET TAB ========== -->
+    <div class="tab-content" id="tab-budget">
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-label">City Budget Pool</div>
+                <div class="stat-value">$4.8M</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Citizen Allocated</div>
+                <div class="stat-value">$3.2M</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Disbursed to Projects</div>
+                <div class="stat-value">$2.1M</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Available for Voting</div>
+                <div class="stat-value">$1.6M</div>
+            </div>
+        </div>
+
+        <!-- Real-time Fund Allocation -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Real-Time Fund Allocation (Citizen-Voted)</span>
+                <span class="immutable-icon">Live On-Chain Data</span>
+            </div>
+            <div class="card-body">
+                <div id="budgetAllocations"></div>
+            </div>
+        </div>
+
+        <!-- Budget Transactions -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Public Budget Transactions (Auditable Ledger)</span>
+                <div class="filters">
+                    <select class="filter-select" id="budgetTypeFilter" onchange="renderBudget()">
+                        <option value="all">All Types</option>
+                        <option value="allocation">Allocation</option>
+                        <option value="disbursement">Disbursement</option>
+                        <option value="return">Return</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Proposal</th>
+                            <th>Recipient</th>
+                            <th>Amount</th>
+                            <th>Running Balance</th>
+                            <th>TX Hash</th>
+                            <th>Record</th>
+                        </tr>
+                    </thead>
+                    <tbody id="budgetTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== LIFECYCLE TAB ========== -->
+    <div class="tab-content" id="tab-lifecycle">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Citizen Project Lifecycle History</span>
+                <div class="filters">
+                    <select class="filter-select" id="lifecycleFilter" onchange="renderLifecycle()">
+                        <option value="all">All Projects</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="lifecycleTimeline"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Project Status Tracker (Public Visibility)</span>
+            </div>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Project</th>
+                            <th>Name</th>
+                            <th>District</th>
+                            <th>Phase</th>
+                            <th>Progress</th>
+                            <th>Budget Used</th>
+                            <th>Milestones</th>
+                            <th>Last Update TX</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lifecycleTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== DEMOGRAPHICS TAB ========== -->
+    <div class="tab-content" id="tab-demographics">
+        <!-- Summary Stats -->
+        <div class="stats-row fade-in">
+            <div class="stat-card">
+                <div class="stat-label">Total Registered Citizens</div>
+                <div class="stat-value">15,947</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Male Citizens</div>
+                <div class="stat-value" style="background:linear-gradient(135deg,#3b82f6,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">7,495</div>
+                <div class="stat-change" style="color:var(--accent-blue);">47.0%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Female Citizens</div>
+                <div class="stat-value" style="background:linear-gradient(135deg,#ec4899,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">8,132</div>
+                <div class="stat-change" style="color:#ec4899;">51.0%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Non-Binary / Other</div>
+                <div class="stat-value" style="background:linear-gradient(135deg,#a78bfa,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">320</div>
+                <div class="stat-change" style="color:var(--accent-purple);">2.0%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Median Age</div>
+                <div class="stat-value">38</div>
+                <div class="stat-change" style="color:var(--text-muted);">years</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg. Voter Age</div>
+                <div class="stat-value">41</div>
+                <div class="stat-change" style="color:var(--text-muted);">years</div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <!-- Gender Distribution Donut -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <span class="card-title">Gender Distribution</span>
+                </div>
+                <div class="card-body">
+                    <div class="donut-container">
+                        <div class="donut" id="genderDonut"></div>
+                        <div class="legend" id="genderLegend"></div>
+                    </div>
+                    <!-- Gender comparison bar -->
+                    <div style="margin-top:1.5rem;">
+                        <div style="font-size:0.8rem;font-weight:600;margin-bottom:0.5rem;">Male vs Female Proportion</div>
+                        <div style="display:flex;height:36px;border-radius:8px;overflow:hidden;">
+                            <div style="width:47%;background:#3b82f6;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;color:white;">Male 47%</div>
+                            <div style="width:51%;background:#ec4899;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;color:white;">Female 51%</div>
+                            <div style="width:2%;background:#a78bfa;display:flex;align-items:center;justify-content:center;"></div>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;margin-top:0.3rem;font-size:0.7rem;color:var(--text-muted);">
+                            <span>7,495 male</span>
+                            <span>8,132 female</span>
+                            <span>320 other</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Age Distribution Pyramid -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <span class="card-title">Age Distribution</span>
+                </div>
+                <div class="card-body" id="ageDistribution"></div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <!-- Age Pyramid (Population Pyramid) -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <span class="card-title">Population Pyramid by Gender</span>
+                </div>
+                <div class="card-body" id="populationPyramid"></div>
+            </div>
+
+            <!-- Participation by Gender -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <span class="card-title">Voting Participation by Gender</span>
+                </div>
+                <div class="card-body" id="participationByGender"></div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <!-- Participation by Age -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <span class="card-title">Voting Participation by Age Group</span>
+                </div>
+                <div class="card-body" id="participationByAge"></div>
+            </div>
+
+            <!-- Demographics by County -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <span class="card-title">Gender Split by County</span>
+                </div>
+                <div class="card-body" id="genderByCounty"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== DISCUSSION TAB (Phase 3) ========== -->
+    <div class="tab-content" id="tab-discussion">
+        <div class="stats-row fade-in">
+            <div class="stat-card">
+                <div class="stat-label">Total Comments</div>
+                <div class="stat-value" id="statComments">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Likes</div>
+                <div class="stat-value" id="statLikes">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Active Discussions</div>
+                <div class="stat-value" id="statDiscussions">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Participating Citizens</div>
+                <div class="stat-value" id="statDiscParticipants">0</div>
+            </div>
+        </div>
+
+        <!-- Phase Flow Indicator -->
+        <div class="phase-flow">
+            <div class="phase-step completed-phase"><div class="phase-num">Phase 1</div><div class="phase-name">Budget Set</div></div>
+            <div class="phase-step completed-phase"><div class="phase-num">Phase 2</div><div class="phase-name">Ideas</div></div>
+            <div class="phase-step current"><div class="phase-num">Phase 3</div><div class="phase-name">Discussion</div></div>
+            <div class="phase-step"><div class="phase-num">Phase 4</div><div class="phase-name">Expert</div></div>
+            <div class="phase-step"><div class="phase-num">Phase 5</div><div class="phase-name">Vote</div></div>
+            <div class="phase-step"><div class="phase-num">Phase 6</div><div class="phase-name">Implement</div></div>
+            <div class="phase-step"><div class="phase-num">Phase 7</div><div class="phase-name">Feedback</div></div>
+        </div>
+
+        <div class="grid-2">
+            <!-- Proposals to discuss -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Proposals Open for Discussion</span>
+                    <div class="filters">
+                        <select class="filter-select" id="discussionFilter" onchange="renderDiscussion()">
+                            <option value="all">All Proposals</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body" id="discussionProposals"></div>
+            </div>
+
+            <!-- Comment section -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Comments & Discussion</span>
+                </div>
+                <div class="card-body">
+                    <div id="discussionComments" style="max-height:400px;overflow-y:auto;margin-bottom:1rem;"></div>
+                    <div style="border-top:1px solid var(--border);padding-top:1rem;">
+                        <div class="form-group" style="margin-bottom:0.75rem;">
+                            <select class="form-select" id="commentProposalSelect" style="margin-bottom:0.75rem;">
+                                <option value="">Select proposal to comment on...</option>
+                            </select>
+                            <textarea class="form-textarea" id="commentText" placeholder="Share your thoughts on this proposal..." style="min-height:70px;"></textarea>
+                        </div>
+                        <div style="display:flex;gap:0.5rem;">
+                            <button class="btn btn-primary" onclick="submitComment()">Post Comment On-Chain</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== EXPERT REVIEW TAB (Phase 4) ========== -->
+    <div class="tab-content" id="tab-expert">
+        <div class="stats-row fade-in">
+            <div class="stat-card">
+                <div class="stat-label">Pending Reviews</div>
+                <div class="stat-value" id="statPendingReviews">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Approved</div>
+                <div class="stat-value" style="background:linear-gradient(135deg,#10b981,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;" id="statExpertApproved">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Rejected</div>
+                <div class="stat-value" style="background:linear-gradient(135deg,#ef4444,#f87171);-webkit-background-clip:text;-webkit-text-fill-color:transparent;" id="statExpertRejected">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Expert Panel</div>
+                <div class="stat-value" id="statExpertCount">3</div>
+            </div>
+        </div>
+
+        <!-- Phase Flow -->
+        <div class="phase-flow">
+            <div class="phase-step completed-phase"><div class="phase-num">Phase 1</div><div class="phase-name">Budget Set</div></div>
+            <div class="phase-step completed-phase"><div class="phase-num">Phase 2</div><div class="phase-name">Ideas</div></div>
+            <div class="phase-step completed-phase"><div class="phase-num">Phase 3</div><div class="phase-name">Discussion</div></div>
+            <div class="phase-step current"><div class="phase-num">Phase 4</div><div class="phase-name">Expert</div></div>
+            <div class="phase-step"><div class="phase-num">Phase 5</div><div class="phase-name">Vote</div></div>
+            <div class="phase-step"><div class="phase-num">Phase 6</div><div class="phase-name">Implement</div></div>
+            <div class="phase-step"><div class="phase-num">Phase 7</div><div class="phase-name">Feedback</div></div>
+        </div>
+
+        <!-- Expert Review Panel (visible to experts only when connected) -->
+        <div id="expertReviewPanel" style="display:none;">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Submit Expert Evaluation</span>
+                    <span class="role-indicator expert">Expert Access</span>
+                </div>
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Select Proposal</label>
+                            <select class="form-select" id="expertProposalSelect"></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Decision</label>
+                            <select class="form-select" id="expertDecision">
+                                <option value="">Select decision...</option>
+                                <option value="approved">Approve - Feasible</option>
+                                <option value="rejected">Reject - Not Feasible</option>
+                                <option value="revision">Request Revision</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Justification</label>
+                        <textarea class="form-textarea" id="expertJustification" placeholder="Provide detailed expert justification for your decision..." required></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Feasibility Score (1-10)</label>
+                            <input type="number" class="form-input" id="expertFeasibility" min="1" max="10" placeholder="1-10">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Cost Assessment</label>
+                            <select class="form-select" id="expertCostAssessment">
+                                <option value="within-budget">Within Budget</option>
+                                <option value="over-budget">Over Budget</option>
+                                <option value="under-budget">Under Budget</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="submitExpertReview()">Submit Review On-Chain</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expert Reviews List -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Expert Evaluations</span>
+                <div class="filters">
+                    <select class="filter-select" id="expertFilterStatus" onchange="renderExpertReviews()">
+                        <option value="all">All Status</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                        <option value="revision">Revision Requested</option>
+                        <option value="pending">Pending Review</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-body" id="expertReviewsList"></div>
+        </div>
+    </div>
+
+    <!-- ========== FEEDBACK TAB (Phase 7) ========== -->
+    <div class="tab-content" id="tab-feedback">
+        <div class="stats-row fade-in">
+            <div class="stat-card">
+                <div class="stat-label">Total Feedback</div>
+                <div class="stat-value" id="statFeedbackTotal">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Average Rating</div>
+                <div class="stat-value" id="statAvgRating">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Completed Projects</div>
+                <div class="stat-value" id="statCompletedProjects">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Citizen Satisfaction</div>
+                <div class="stat-value" id="statSatisfaction">-</div>
+            </div>
+        </div>
+
+        <!-- Phase Flow -->
+        <div class="phase-flow">
+            <div class="phase-step completed-phase"><div class="phase-num">Phase 1</div><div class="phase-name">Budget Set</div></div>
+            <div class="phase-step completed-phase"><div class="phase-num">Phase 2</div><div class="phase-name">Ideas</div></div>
+            <div class="phase-step completed-phase"><div class="phase-num">Phase 3</div><div class="phase-name">Discussion</div></div>
+            <div class="phase-step completed-phase"><div class="phase-num">Phase 4</div><div class="phase-name">Expert</div></div>
+            <div class="phase-step completed-phase"><div class="phase-num">Phase 5</div><div class="phase-name">Vote</div></div>
+            <div class="phase-step completed-phase"><div class="phase-num">Phase 6</div><div class="phase-name">Implement</div></div>
+            <div class="phase-step current"><div class="phase-num">Phase 7</div><div class="phase-name">Feedback</div></div>
+        </div>
+
+        <div class="grid-2">
+            <!-- Submit Feedback -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Rate a Completed Project</span>
+                    <span class="immutable-icon">Recorded On-Chain</span>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">Select Completed Project</label>
+                        <select class="form-select" id="feedbackProjectSelect"></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Your Rating</label>
+                        <div class="star-rating" id="starRating">
+                            <span class="star" data-value="1" onclick="setRating(1)">&#9733;</span>
+                            <span class="star" data-value="2" onclick="setRating(2)">&#9733;</span>
+                            <span class="star" data-value="3" onclick="setRating(3)">&#9733;</span>
+                            <span class="star" data-value="4" onclick="setRating(4)">&#9733;</span>
+                            <span class="star" data-value="5" onclick="setRating(5)">&#9733;</span>
+                        </div>
+                        <div class="form-hint" id="ratingLabel">Select a rating (1 = Poor, 5 = Excellent)</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Your Feedback</label>
+                        <textarea class="form-textarea" id="feedbackText" placeholder="Share your experience with this completed project..."></textarea>
+                    </div>
+                    <button class="btn btn-success" onclick="submitFeedback()">Submit Feedback On-Chain</button>
+                </div>
+            </div>
+
+            <!-- Feedback List -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Citizen Feedback</span>
+                </div>
+                <div class="card-body" id="feedbackList" style="max-height:500px;overflow-y:auto;"></div>
+            </div>
+        </div>
+
+        <!-- Project Satisfaction Overview -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Project Satisfaction Overview</span>
+            </div>
+            <div class="card-body" id="satisfactionOverview"></div>
+        </div>
+    </div>
+
+    <!-- ========== AUDIT TAB ========== -->
+    <div class="tab-content" id="tab-audit">
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-label">Total Audit Events</div>
+                <div class="stat-value" id="statAuditTotal">3</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Proposals Recorded</div>
+                <div class="stat-value" id="statAuditProposals">1</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Votes Recorded</div>
+                <div class="stat-value" id="statAuditVotes">1</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Budget TXs Recorded</div>
+                <div class="stat-value" id="statAuditBudget">1</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Open Audit Dashboard - Public Accountability</span>
+                <div class="filters">
+                    <select class="filter-select" id="auditTypeFilter" onchange="renderAudit()">
+                        <option value="all">All Events</option>
+                        <option value="proposal">Proposals</option>
+                        <option value="vote">Votes</option>
+                        <option value="budget">Budget</option>
+                        <option value="discussion">Discussion</option>
+                        <option value="expert">Expert Review</option>
+                        <option value="execution">Execution</option>
+                        <option value="milestone">Milestone</option>
+                        <option value="feedback">Feedback</option>
+                        <option value="phase">Phase Change</option>
+                    </select>
+                    <input type="date" class="filter-input" id="auditDateFilter" onchange="renderAudit()">
+                </div>
+            </div>
+            <div class="card-body" id="auditLog"></div>
+        </div>
+
+        <!-- Verification Panel -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">On-Chain Record Verification</span>
+            </div>
+            <div class="card-body">
+                <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem;">
+                    Any citizen can verify any participatory budgeting record by entering the transaction hash.
+                    All decisions, votes, and fund movements are immutable and publicly auditable on the blockchain.
+                </p>
+                <div style="display:flex;gap:0.75rem;">
+                    <input type="text" class="filter-input" style="flex:1;" placeholder="Enter transaction hash (0x...)" id="verifyInput">
+                    <button class="btn btn-primary" onclick="verifyRecord()">Verify Record</button>
+                </div>
+                <div id="verifyResult" style="margin-top:1rem;"></div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<!-- Vote Confirmation Modal -->
+<div class="modal-overlay" id="voteModal">
+    <div class="modal">
+        <h2>Confirm Your Vote</h2>
+        <div class="subtitle">Your vote will be permanently recorded on the blockchain</div>
+        <div id="voteModalContent"></div>
+        <div style="display:flex;gap:0.75rem;margin-top:1.5rem;">
+            <button class="btn btn-success" onclick="confirmVote()" style="flex:1;">Confirm & Sign Transaction</button>
+            <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+        </div>
+        <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.75rem;text-align:center;">
+            Estimated gas: ~0.001 MATIC | Your vote is public and immutable
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="toast" id="toast">
+    <div id="toastContent"></div>
+</div>
+
+<script>
+// =============== STATE ===============
+let walletConnected = false;
+let currentCitizen = null;
+let pendingVote = null;
+let currentRole = 'citizen'; // 'citizen', 'government', 'expert'
+let selectedRating = 0;
+let totalBudgetAmount = 4800000;
+let budgetCycle = 'FY 2026 Cycle 1';
+let budgetSet = true; // Phase 1 already done for demo
+
+// =============== SMART CONTRACT SIMULATION ===============
+class ePBContract {
+    constructor() {
+        this.blockNumber = 58214773;
+        this.events = [];
+        this.voterRegistry = {}; // proposalId -> Set of voter addresses (one-user-one-vote)
+        this.roles = { government: new Set(), citizen: new Set(), expert: new Set() };
+        // Pre-register demo roles
+        this.roles.government.add('0x9c1d...a43e');
+        this.roles.expert.add('0x5f7b...d91c');
+        this.roles.expert.add('0x2e8a...f35b');
+        this.roles.expert.add('0x7d3c...e28a');
+        this.roles.citizen.add('0xa3f1...b82d');
+    }
+
+    getBlock() { return ++this.blockNumber; }
+
+    generateTx() {
+        return '0x' + Math.random().toString(16).substr(2, 8) + '...' + Math.random().toString(16).substr(2, 4);
+    }
+
+    checkRole(addr, role) {
+        return this.roles[role] && this.roles[role].has(addr);
+    }
+
+    assignRole(addr, role) {
+        if (this.roles[role]) this.roles[role].add(addr);
+    }
+
+    // Phase 1: Budget Determination (government only)
+    setBudget(amount, cycle, justification, callerAddr) {
+        if (!this.checkRole(callerAddr, 'government')) {
+            return { success: false, error: 'ACCESS_DENIED: Government role required' };
+        }
+        const tx = this.generateTx();
+        const block = this.getBlock();
+        this.emitEvent('phase', `Budget set: \u20AC${amount.toLocaleString()} for ${cycle}`, callerAddr, tx, block);
+        return { success: true, tx, block };
+    }
+
+    // Phase 2: Submit Idea (citizen, age >= 14)
+    submitIdea(proposal, callerAddr, age) {
+        if (age < 14) {
+            return { success: false, error: 'ELIGIBILITY: Minimum age is 14 years' };
+        }
+        const tx = this.generateTx();
+        const block = this.getBlock();
+        this.emitEvent('proposal', `${proposal.id} submitted: ${proposal.title}`, callerAddr, tx, block);
+        return { success: true, tx, block };
+    }
+
+    // Phase 3: Discussion (like/comment)
+    addComment(projectId, userId, comment, callerAddr) {
+        const tx = this.generateTx();
+        const block = this.getBlock();
+        this.emitEvent('discussion', `Comment on ${projectId} by ${userId}`, callerAddr, tx, block);
+        return { success: true, tx, block };
+    }
+
+    addLike(projectId, callerAddr) {
+        const tx = this.generateTx();
+        const block = this.getBlock();
+        this.emitEvent('discussion', `Like on ${projectId}`, callerAddr, tx, block);
+        return { success: true, tx, block };
+    }
+
+    // Phase 4: Expert Evaluation (expert only)
+    submitEvaluation(projectId, decision, justification, callerAddr) {
+        if (!this.checkRole(callerAddr, 'expert')) {
+            return { success: false, error: 'ACCESS_DENIED: Expert role required' };
+        }
+        const tx = this.generateTx();
+        const block = this.getBlock();
+        this.emitEvent('expert', `Expert evaluation on ${projectId}: ${decision}`, callerAddr, tx, block);
+        return { success: true, tx, block };
+    }
+
+    // Phase 5: Voting (one-user-one-vote)
+    castVote(projectId, voteType, callerAddr, demographics) {
+        if (!this.voterRegistry[projectId]) this.voterRegistry[projectId] = new Set();
+        if (this.voterRegistry[projectId].has(callerAddr)) {
+            return { success: false, error: 'DUPLICATE_VOTE: One citizen, one vote per proposal' };
+        }
+        this.voterRegistry[projectId].add(callerAddr);
+        const tx = this.generateTx();
+        const block = this.getBlock();
+        // Anonymize voter but preserve demographics
+        const anonId = '0x' + Math.random().toString(16).substr(2, 12) + '...anon';
+        this.emitEvent('vote', `Anonymous vote on ${projectId}: ${voteType} [Age:${demographics.ageGroup}, Gender:${demographics.gender}]`, anonId, tx, block);
+        return { success: true, tx, block, anonId };
+    }
+
+    // Phase 6: Implementation approval (government/council)
+    approveImplementation(projectId, callerAddr) {
+        if (!this.checkRole(callerAddr, 'government')) {
+            return { success: false, error: 'ACCESS_DENIED: City council approval required' };
+        }
+        const tx = this.generateTx();
+        const block = this.getBlock();
+        this.emitEvent('execution', `Implementation approved for ${projectId}`, callerAddr, tx, block);
+        return { success: true, tx, block };
+    }
+
+    // Phase 7: Feedback (1-5 rating)
+    submitFeedback(projectId, rating, comment, callerAddr) {
+        if (rating < 1 || rating > 5) {
+            return { success: false, error: 'INVALID_RATING: Must be 1-5' };
+        }
+        const tx = this.generateTx();
+        const block = this.getBlock();
+        this.emitEvent('feedback', `Feedback on ${projectId}: ${rating}/5 stars`, callerAddr, tx, block);
+        return { success: true, tx, block };
+    }
+
+    emitEvent(type, msg, addr, tx, block) {
+        const event = {
+            type, msg,
+            meta: `By ${addr} | Block #${block.toLocaleString()}`,
+            tx, time: "2026-03-19 " + new Date().toTimeString().slice(0, 5) + " UTC"
+        };
+        this.events.push(event);
+        auditEvents.unshift(event);
+    }
+}
+
+const contract = new ePBContract();
+
+// =============== NEW DATA ARRAYS ===============
+const discussionComments = [
+    { id: 1, proposalId: "CPB-001", citizen: "Marek Kask", addr: "0xb2c1...e45f", text: "Great idea! Kadriorg Park definitely needs a modern playground. My children would love this.", likes: 18, time: "2026-03-18 10:22 UTC", tx: "0xcc33...dd44" },
+    { id: 2, proposalId: "CPB-001", citizen: "Kati Rebane", addr: "0xd4e2...f67a", text: "I support this but suggest including accessible equipment for children with disabilities.", likes: 34, time: "2026-03-18 11:45 UTC", tx: "0xee55...ff66" },
+];
+
+const expertReviews = [
+    { proposalId: "CPB-001", expert: "Dr. Jaan Saar", expertAddr: "0x5f7b...d91c", decision: "approved", justification: "Feasible project with clear community benefit. Site survey confirms adequate space. Budget estimate is reasonable for the scope.", feasibility: 8, costAssessment: "within-budget", time: "2026-03-18 15:30 UTC", tx: "0xff77...aa88" },
+];
+
+const citizenFeedback = [];
+
+const proposalLikes = { "CPB-001": 124 }; // proposalId -> total likes
+
+// =============== DATA ===============
+const districts = {
+    "Harju":      { name: "Harju maakond",      citizens: 4812, participation: 79 },
+    "Hiiu":       { name: "Hiiu maakond",       citizens: 342,  participation: 84 },
+    "Ida-Viru":   { name: "Ida-Viru maakond",   citizens: 1523, participation: 62 },
+    "Jogeva":     { name: "Jõgeva maakond",     citizens: 487,  participation: 71 },
+    "Jarva":      { name: "Järva maakond",      citizens: 512,  participation: 73 },
+    "Laane":      { name: "Lääne maakond",      citizens: 398,  participation: 76 },
+    "Laane-Viru": { name: "Lääne-Viru maakond", citizens: 824,  participation: 68 },
+    "Polva":      { name: "Põlva maakond",      citizens: 412,  participation: 75 },
+    "Parnu":      { name: "Pärnu maakond",      citizens: 1245, participation: 74 },
+    "Rapla":      { name: "Rapla maakond",      citizens: 534,  participation: 70 },
+    "Saare":      { name: "Saare maakond",      citizens: 521,  participation: 82 },
+    "Tartu":      { name: "Tartu maakond",      citizens: 2187, participation: 81 },
+    "Valga":      { name: "Valga maakond",      citizens: 438,  participation: 67 },
+    "Viljandi":   { name: "Viljandi maakond",   citizens: 678,  participation: 72 },
+    "Voru":       { name: "Võru maakond",       citizens: 534,  participation: 69 },
+};
+
+const proposals = [
+    { id: "CPB-001", title: "New Playground at Kadriorg Park", category: "parks", citizen: "Liis Tamm", citizenAddr: "0xa3f1...b82d", district: "Harju", status: "voting", phase: 5, forVotes: 2847, againstVotes: 412, abstainVotes: 198, budget: 85000, tx: "0x7e2a...f41c", date: "2026-03-18", participation: 67, endorsements: 124 },
+];
+
+const budgetTransactions = [
+    { date: "2026-03-18", type: "allocation", proposal: "CPB-001", recipient: "Kadriorg Park Committee", amount: 85000, balance: 4800000, tx: "0x7e2a...f41c" },
+];
+
+const individualVotes = [
+    { citizen: "Liis Tamm", addr: "0xa3f1...b82d", district: "Harju", proposal: "CPB-001", vote: "For", time: "2026-03-18 14:32 UTC", tx: "0xaa11...bb22" },
+];
+
+const projects = [
+    {
+        id: "CPB-001", name: "New Playground at Kadriorg Park", district: "Harju", phase: "In Progress",
+        progress: 30, budgetUsed: "\u20AC25.5K / \u20AC85K", milestones: "1/4",
+        lastTx: "0x7e2a...f41c",
+        events: [
+            { date: "2026-03-18", title: "Milestone 1: Site survey", desc: "Kadriorg Park site surveyed. Equipment specifications approved.", dot: "green" },
+            { date: "2026-03-15", title: "Funding Allocated", desc: "\u20AC85K allocated from citizen budget pool.", dot: "yellow" },
+            { date: "2026-03-12", title: "Citizen Vote Approved", desc: "CPB-001 passed with 67% participation, 82% For.", dot: "purple" },
+        ]
+    },
+];
+
+const auditEvents = [
+    { type: "proposal", msg: "CPB-001 submitted: New Playground at Kadriorg Park", meta: "By Liis Tamm (Harju maakond) | Block #58,214,770", tx: "0x7e2a...f41c", time: "2026-03-18 09:15 UTC" },
+    { type: "vote", msg: "Citizen vote on CPB-001: For (Liis Tamm, Harju maakond)", meta: "1 citizen = 1 vote | Block #58,214,512", tx: "0xaa11...bb22", time: "2026-03-18 14:32 UTC" },
+    { type: "budget", msg: "Budget allocated: \u20AC85K for CPB-001 (Kadriorg Playground)", meta: "To Kadriorg Park Committee | Block #58,214,045", tx: "0x7e2a...f41c", time: "2026-03-18 10:00 UTC" },
+];
+
+const fundCategories = [
+    { name: "Infrastructure & Roads", amount: 850000, color: "#3b82f6", pct: 26.6 },
+    { name: "Education & Schools", amount: 640000, color: "#8b5cf6", pct: 20.0 },
+    { name: "Healthcare", amount: 520000, color: "#10b981", pct: 16.3 },
+    { name: "Parks & Recreation", amount: 380000, color: "#14b8a6", pct: 11.9 },
+    { name: "Public Safety", amount: 340000, color: "#ef4444", pct: 10.6 },
+    { name: "Public Transport", amount: 250000, color: "#f59e0b", pct: 7.8 },
+    { name: "Arts & Culture", amount: 120000, color: "#f97316", pct: 3.7 },
+    { name: "Housing", amount: 100000, color: "#06b6d4", pct: 3.1 },
+];
+
+const citizenColors = ["#3b82f6", "#10b981", "#8b5cf6", "#ef4444", "#f59e0b", "#06b6d4", "#14b8a6", "#f97316"];
+
+// =============== RENDERING HELPERS ===============
+
+function formatNum(n) { return n.toLocaleString(); }
+
+function statusBadge(s) {
+    return `<span class="badge badge-${s}">${s.charAt(0).toUpperCase() + s.slice(1)}</span>`;
+}
+
+function categoryBadge(c) {
+    const labels = { infrastructure: "Infrastructure", education: "Education", healthcare: "Healthcare", parks: "Parks & Rec", safety: "Public Safety", transport: "Transport", culture: "Arts & Culture", housing: "Housing" };
+    return `<span class="badge badge-${c}">${labels[c] || c}</span>`;
+}
+
+function citizenBadge(name, addr) {
+    const initials = name.split(' ').map(n => n[0]).join('');
+    const color = citizenColors[Math.abs(name.charCodeAt(0)) % citizenColors.length];
+    return `<div class="citizen-badge">
+        <div class="citizen-avatar" style="background:${color}">${initials}</div>
+        <div><div style="font-weight:600;font-size:0.82rem;">${name}</div><div class="tx-hash" style="font-size:0.7rem;">${addr}</div></div>
+    </div>`;
+}
+
+function voteBar(f, a, ab) {
+    const total = f + a + ab || 1;
+    const fp = (f / total * 100).toFixed(1);
+    const ap = (a / total * 100).toFixed(1);
+    const abp = (ab / total * 100).toFixed(1);
+    return `<div class="vote-bar-container">
+        <div class="vote-bar">
+            <div class="for" style="width:${fp}%"></div>
+            <div class="against" style="width:${ap}%"></div>
+            <div class="abstain" style="width:${abp}%"></div>
+        </div>
+        <div class="vote-labels">
+            <span style="color:var(--accent-green)">${fp}% For</span>
+            <span style="color:var(--accent-red)">${ap}% Against</span>
+            <span>${abp}% Abstain</span>
+        </div>
+    </div>`;
+}
+
+function showToast(html, duration = 4000) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toastContent').innerHTML = html;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), duration);
+}
+
+function closeModal() {
+    document.getElementById('voteModal').classList.remove('show');
+    pendingVote = null;
+}
+
+// =============== WALLET & ROLES ===============
+
+const roleProfiles = {
+    citizen: { name: "Citizen User", addr: "0x8b4e...c2f1", district: "Harju", initials: "CU", color: "var(--accent-blue)", age: 32, gender: "male" },
+    government: { name: "Gov. Officer", addr: "0x9c1d...a43e", district: "Harju", initials: "GO", color: "var(--accent-purple)", age: 45, gender: "female" },
+    expert: { name: "Dr. Expert", addr: "0x5f7b...d91c", district: "Tartu", initials: "DE", color: "var(--accent-yellow)", age: 52, gender: "male" },
+};
+
+function connectWallet() {
+    walletConnected = true;
+    const profile = roleProfiles[currentRole];
+    currentCitizen = {
+        name: profile.name,
+        addr: profile.addr,
+        district: profile.district,
+        role: currentRole,
+        age: profile.age,
+        gender: profile.gender,
+        votesRemaining: 4,
+        proposalsSubmitted: 2,
+    };
+
+    contract.assignRole(profile.addr, currentRole);
+
+    const btn = document.getElementById('walletBtn');
+    btn.className = 'wallet-btn connected';
+    btn.textContent = profile.addr;
+    btn.onclick = null;
+
+    // Show role selector and indicator
+    document.getElementById('roleSelector').style.display = 'flex';
+    updateRoleUI();
+
+    updateCitizenProfile();
+
+    showToast(`<div style="color:var(--accent-green);font-weight:700;">Wallet Connected</div><div style="font-size:0.82rem;margin-top:0.25rem;">Welcome, ${profile.name} <span class="role-indicator ${currentRole}">${currentRole}</span></div>`);
+
+    renderAll();
+}
+
+function switchRole(role) {
+    if (!walletConnected) return;
+    currentRole = role;
+    const profile = roleProfiles[role];
+    currentCitizen = {
+        name: profile.name,
+        addr: profile.addr,
+        district: profile.district,
+        role: role,
+        age: profile.age,
+        gender: profile.gender,
+        votesRemaining: 4,
+        proposalsSubmitted: 2,
+    };
+    contract.assignRole(profile.addr, role);
+
+    const btn = document.getElementById('walletBtn');
+    btn.textContent = profile.addr;
+
+    updateRoleUI();
+    updateCitizenProfile();
+    renderAll();
+
+    showToast(`<div style="color:var(--accent-green);font-weight:700;">Role Switched</div><div style="font-size:0.82rem;margin-top:0.25rem;">Now acting as <span class="role-indicator ${role}">${role}</span></div>`);
+}
+
+function updateRoleUI() {
+    // Update role buttons
+    document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active-role'));
+    const btnId = { citizen: 'roleCitizen', government: 'roleGovernment', expert: 'roleExpert' };
+    const el = document.getElementById(btnId[currentRole]);
+    if (el) el.classList.add('active-role');
+
+    // Update role indicator
+    const indicator = document.getElementById('roleIndicator');
+    indicator.style.display = 'inline-flex';
+    indicator.className = `role-indicator ${currentRole}`;
+    indicator.textContent = currentRole.charAt(0).toUpperCase() + currentRole.slice(1);
+
+    // Show/hide role-specific panels
+    const govPanel = document.getElementById('govBudgetPanel');
+    const expertPanel = document.getElementById('expertReviewPanel');
+    if (govPanel) govPanel.style.display = currentRole === 'government' ? 'block' : 'none';
+    if (expertPanel) expertPanel.style.display = currentRole === 'expert' ? 'block' : 'none';
+}
+
+function updateCitizenProfile() {
+    const profile = roleProfiles[currentRole];
+    document.getElementById('citizenProfile').innerHTML = `
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+            <div class="citizen-avatar" style="background:${profile.color};width:48px;height:48px;font-size:1rem;">${profile.initials}</div>
+            <div>
+                <div style="font-weight:700;font-size:1rem;">${profile.name}</div>
+                <div class="tx-hash">${profile.addr}</div>
+                <span class="district-tag">${profile.district} maakond</span>
+                <span class="role-indicator ${currentRole}" style="margin-left:0.5rem;">${currentRole}</span>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+            <div style="background:var(--bg-primary);border-radius:8px;padding:0.75rem;">
+                <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Role</div>
+                <div style="font-size:1.3rem;font-weight:700;color:var(--accent-cyan);">${currentRole.charAt(0).toUpperCase() + currentRole.slice(1)}</div>
+            </div>
+            <div style="background:var(--bg-primary);border-radius:8px;padding:0.75rem;">
+                <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Proposals</div>
+                <div style="font-size:1.3rem;font-weight:700;color:var(--accent-cyan);">${proposals.filter(p => p.citizenAddr === profile.addr).length}</div>
+            </div>
+            <div style="background:var(--bg-primary);border-radius:8px;padding:0.75rem;">
+                <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Votes Cast</div>
+                <div style="font-size:1.3rem;font-weight:700;color:var(--accent-green);">${individualVotes.filter(v => v.addr === profile.addr).length}</div>
+            </div>
+            <div style="background:var(--bg-primary);border-radius:8px;padding:0.75rem;">
+                <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;">Status</div>
+                <div style="font-size:1.3rem;font-weight:700;color:var(--accent-green);">Verified</div>
+            </div>
+        </div>
+    `;
+}
+
+// =============== SUBMIT PROPOSAL ===============
+
+function submitProposal(e) {
+    e.preventDefault();
+    if (!walletConnected) {
+        showToast(`<div style="color:var(--accent-yellow);font-weight:700;">Wallet Required</div><div style="font-size:0.82rem;margin-top:0.25rem;">Please connect your wallet to submit a proposal.</div>`);
+        return;
+    }
+
+    const title = document.getElementById('propTitle').value;
+    const category = document.getElementById('propCategory').value;
+    const district = document.getElementById('propDistrict').value;
+    const budget = parseInt(document.getElementById('propBudget').value);
+    const age = parseInt(document.getElementById('propAge').value);
+    const anonymous = document.getElementById('propAnonymous').checked;
+    const newId = `CPB-${String(proposals.length + 1).padStart(3, '0')}`;
+
+    // Phase 2: Eligibility check via smart contract (age >= 14)
+    const contractResult = contract.submitIdea({ id: newId, title }, currentCitizen.addr, age);
+    if (!contractResult.success) {
+        showToast(`<div style="color:var(--accent-red);font-weight:700;">Submission Rejected</div><div style="font-size:0.82rem;margin-top:0.25rem;">${contractResult.error}</div>`);
+        return;
+    }
+
+    const districtName = districts[district] ? districts[district].name : district;
+    const displayName = anonymous ? 'Anonymous Citizen' : currentCitizen.name;
+    const displayAddr = anonymous ? '0x' + Math.random().toString(16).substr(2, 8) + '...anon' : currentCitizen.addr;
+
+    const newProposal = {
+        id: newId,
+        title: title,
+        category: category,
+        citizen: displayName,
+        citizenAddr: displayAddr,
+        _realAddr: currentCitizen.addr, // stored for ownership check
+        district: district,
+        status: "discussion", // Start in discussion phase (Phase 3)
+        phase: 3,
+        forVotes: 0, againstVotes: 0, abstainVotes: 0,
+        budget: budget,
+        tx: contractResult.tx,
+        date: "2026-03-19",
+        participation: 0,
+        endorsements: 0,
+        age: age,
+        anonymous: anonymous,
+        _isNew: true
+    };
+
+    proposals.unshift(newProposal);
+    proposalLikes[newId] = 0;
+
+    document.getElementById('proposalForm').reset();
+    renderAll();
+
+    // Auto-navigate to All Proposals so the citizen sees their submission
+    switchTab('proposals');
+
+    showToast(`
+        <div style="color:var(--accent-green);font-weight:700;">Proposal Submitted On-Chain (Phase 2)</div>
+        <div style="font-size:0.82rem;margin-top:0.25rem;">${newId}: ${title}</div>
+        <div style="font-size:0.75rem;margin-top:0.25rem;">Now in <strong>Discussion Phase</strong>. Citizens can comment and like.</div>
+        <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.25rem;">TX: <span class="tx-hash">${contractResult.tx}</span></div>
+    `, 5000);
+}
+
+// =============== VOTING ===============
+
+function openVoteModal(proposalId, voteType) {
+    if (!walletConnected) {
+        showToast(`<div style="color:var(--accent-yellow);font-weight:700;">Wallet Required</div><div style="font-size:0.82rem;margin-top:0.25rem;">Connect your wallet to cast a vote.</div>`);
+        return;
+    }
+
+    const p = proposals.find(pr => pr.id === proposalId);
+    if (!p) return;
+
+    pendingVote = { proposalId, voteType };
+
+    const voteColors = { for: 'var(--accent-green)', against: 'var(--accent-red)', abstain: 'var(--text-muted)' };
+
+    document.getElementById('voteModalContent').innerHTML = `
+        <div style="background:var(--bg-primary);border-radius:8px;padding:1rem;margin-top:0.5rem;">
+            <div style="font-weight:600;margin-bottom:0.5rem;">${p.id}: ${p.title}</div>
+            <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:0.5rem;">${categoryBadge(p.category)} <span class="district-tag">${p.district} - ${districts[p.district].name}</span></div>
+            <div style="font-size:0.85rem;margin-top:0.75rem;">
+                Your vote: <strong style="color:${voteColors[voteType]}">${voteType.charAt(0).toUpperCase() + voteType.slice(1)}</strong>
+            </div>
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.5rem;">
+                Voter: ${currentCitizen.name} (${currentCitizen.addr})<br>
+                District: ${currentCitizen.district} - ${districts[currentCitizen.district].name}
+            </div>
+        </div>
+    `;
+
+    document.getElementById('voteModal').classList.add('show');
+}
+
+function confirmVote() {
+    if (!pendingVote) return;
+
+    const p = proposals.find(pr => pr.id === pendingVote.proposalId);
+    if (!p) return;
+
+    // Phase 5: Smart contract enforces one-user-one-vote with anonymized demographics
+    const demographics = {
+        ageGroup: getAgeGroup(currentCitizen.age || 32),
+        gender: currentCitizen.gender || 'unspecified'
+    };
+
+    const contractResult = contract.castVote(
+        pendingVote.proposalId,
+        pendingVote.voteType,
+        currentCitizen.addr,
+        demographics
+    );
+
+    if (!contractResult.success) {
+        closeModal();
+        showToast(`<div style="color:var(--accent-red);font-weight:700;">Vote Rejected</div><div style="font-size:0.82rem;margin-top:0.25rem;">${contractResult.error}</div>`);
+        return;
+    }
+
+    if (pendingVote.voteType === 'for') p.forVotes += 1;
+    else if (pendingVote.voteType === 'against') p.againstVotes += 1;
+    else p.abstainVotes += 1;
+
+    // Anonymized vote record (voter identity hidden, demographics preserved)
+    individualVotes.unshift({
+        citizen: "Anonymous Voter",
+        addr: contractResult.anonId,
+        district: currentCitizen.district,
+        proposal: pendingVote.proposalId,
+        vote: pendingVote.voteType.charAt(0).toUpperCase() + pendingVote.voteType.slice(1),
+        time: "2026-03-19 " + new Date().toTimeString().slice(0, 5) + " UTC",
+        tx: contractResult.tx,
+        ageGroup: demographics.ageGroup,
+        gender: demographics.gender
+    });
+
+    closeModal();
+    renderAll();
+
+    showToast(`
+        <div style="color:var(--accent-green);font-weight:700;">Vote Recorded On-Chain (Phase 5)</div>
+        <div style="font-size:0.82rem;margin-top:0.25rem;">${pendingVote.proposalId}: ${pendingVote.voteType.charAt(0).toUpperCase() + pendingVote.voteType.slice(1)}</div>
+        <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.25rem;">Voter identity anonymized. TX: <span class="tx-hash">${contractResult.tx}</span></div>
+    `);
+}
+
+function getAgeGroup(age) {
+    if (age < 18) return '14-17';
+    if (age < 25) return '18-24';
+    if (age < 35) return '25-34';
+    if (age < 45) return '35-44';
+    if (age < 55) return '45-54';
+    if (age < 65) return '55-64';
+    if (age < 75) return '65-74';
+    return '75+';
+}
+
+function submitBudgetVote() {
+    if (!walletConnected) {
+        showToast(`<div style="color:var(--accent-yellow);font-weight:700;">Wallet Required</div><div style="font-size:0.82rem;">Connect wallet to submit budget allocation vote.</div>`);
+        return;
+    }
+
+    const fakeTx = '0x' + Math.random().toString(16).substr(2, 8) + '...' + Math.random().toString(16).substr(2, 4);
+
+    auditEvents.unshift({
+        type: "budget",
+        msg: `Budget allocation vote submitted by ${currentCitizen.name} (${currentCitizen.district})`,
+        meta: `Category preferences recorded | Block #58,214,774`,
+        tx: fakeTx,
+        time: "2026-03-19 " + new Date().toTimeString().slice(0, 5) + " UTC"
+    });
+
+    renderAudit();
+
+    showToast(`
+        <div style="color:var(--accent-green);font-weight:700;">Budget Vote Recorded On-Chain</div>
+        <div style="font-size:0.82rem;margin-top:0.25rem;">Your budget allocation preferences have been recorded immutably.</div>
+        <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.25rem;">TX: <span class="tx-hash">${fakeTx}</span></div>
+    `);
+}
+
+// =============== PHASE 1: BUDGET DETERMINATION ===============
+
+function setBudget() {
+    if (!walletConnected || currentRole !== 'government') {
+        showToast(`<div style="color:var(--accent-red);font-weight:700;">Access Denied</div><div style="font-size:0.82rem;">Government role required to set budget.</div>`);
+        return;
+    }
+    const amount = parseInt(document.getElementById('govBudgetAmount').value);
+    const cycle = document.getElementById('govBudgetCycle').value;
+    const justification = document.getElementById('govBudgetJustification').value;
+
+    const result = contract.setBudget(amount, cycle, justification, currentCitizen.addr);
+    if (!result.success) {
+        showToast(`<div style="color:var(--accent-red);font-weight:700;">Error</div><div style="font-size:0.82rem;">${result.error}</div>`);
+        return;
+    }
+
+    totalBudgetAmount = amount;
+    budgetCycle = cycle;
+    budgetSet = true;
+
+    const el = document.getElementById('statBudgetPool');
+    if (el) el.textContent = '\u20AC' + (amount / 1e6).toFixed(1) + 'M';
+
+    document.getElementById('budgetSetStatus').textContent = 'Budget set on-chain! TX: ' + result.tx;
+
+    renderAll();
+    showToast(`<div style="color:var(--accent-green);font-weight:700;">Budget Set On-Chain (Phase 1)</div><div style="font-size:0.82rem;margin-top:0.25rem;">\u20AC${amount.toLocaleString()} for ${cycle}</div><div style="font-size:0.72rem;color:var(--text-muted);">TX: ${result.tx}</div>`);
+}
+
+// =============== PHASE 3: DISCUSSION ===============
+
+function submitComment() {
+    if (!walletConnected) {
+        showToast(`<div style="color:var(--accent-yellow);font-weight:700;">Wallet Required</div><div style="font-size:0.82rem;">Connect wallet to comment.</div>`);
+        return;
+    }
+    const proposalId = document.getElementById('commentProposalSelect').value;
+    const text = document.getElementById('commentText').value.trim();
+    if (!proposalId || !text) {
+        showToast(`<div style="color:var(--accent-yellow);font-weight:700;">Missing Fields</div><div style="font-size:0.82rem;">Select a proposal and write a comment.</div>`);
+        return;
+    }
+
+    const result = contract.addComment(proposalId, currentCitizen.addr, text, currentCitizen.addr);
+
+    discussionComments.unshift({
+        id: discussionComments.length + 1,
+        proposalId: proposalId,
+        citizen: currentCitizen.name,
+        addr: currentCitizen.addr,
+        text: text,
+        likes: 0,
+        time: "2026-03-19 " + new Date().toTimeString().slice(0, 5) + " UTC",
+        tx: result.tx
+    });
+
+    document.getElementById('commentText').value = '';
+    renderDiscussion();
+    showToast(`<div style="color:var(--accent-green);font-weight:700;">Comment Posted On-Chain</div><div style="font-size:0.82rem;">${proposalId}</div><div style="font-size:0.72rem;color:var(--text-muted);">TX: ${result.tx}</div>`);
+}
+
+function likeProposal(proposalId) {
+    if (!walletConnected) {
+        showToast(`<div style="color:var(--accent-yellow);font-weight:700;">Wallet Required</div><div style="font-size:0.82rem;">Connect wallet to like.</div>`);
+        return;
+    }
+    const result = contract.addLike(proposalId, currentCitizen.addr);
+    if (!proposalLikes[proposalId]) proposalLikes[proposalId] = 0;
+    proposalLikes[proposalId]++;
+
+    const p = proposals.find(pr => pr.id === proposalId);
+    if (p) p.endorsements = proposalLikes[proposalId];
+
+    renderDiscussion();
+}
+
+function likeComment(commentId) {
+    if (!walletConnected) return;
+    const comment = discussionComments.find(c => c.id === commentId);
+    if (comment) {
+        comment.likes++;
+        renderDiscussion();
+    }
+}
+
+// =============== PHASE 4: EXPERT REVIEW ===============
+
+function submitExpertReview() {
+    if (!walletConnected || currentRole !== 'expert') {
+        showToast(`<div style="color:var(--accent-red);font-weight:700;">Access Denied</div><div style="font-size:0.82rem;">Expert role required.</div>`);
+        return;
+    }
+
+    const proposalId = document.getElementById('expertProposalSelect').value;
+    const decision = document.getElementById('expertDecision').value;
+    const justification = document.getElementById('expertJustification').value.trim();
+    const feasibility = parseInt(document.getElementById('expertFeasibility').value);
+    const costAssessment = document.getElementById('expertCostAssessment').value;
+
+    if (!proposalId || !decision || !justification) {
+        showToast(`<div style="color:var(--accent-yellow);font-weight:700;">Missing Fields</div><div style="font-size:0.82rem;">Fill in all required fields.</div>`);
+        return;
+    }
+
+    const result = contract.submitEvaluation(proposalId, decision, justification, currentCitizen.addr);
+    if (!result.success) {
+        showToast(`<div style="color:var(--accent-red);font-weight:700;">Error</div><div style="font-size:0.82rem;">${result.error}</div>`);
+        return;
+    }
+
+    expertReviews.unshift({
+        proposalId, expert: currentCitizen.name, expertAddr: currentCitizen.addr,
+        decision, justification, feasibility: feasibility || 5, costAssessment,
+        time: "2026-03-19 " + new Date().toTimeString().slice(0, 5) + " UTC",
+        tx: result.tx
+    });
+
+    // Update proposal status based on expert decision
+    const p = proposals.find(pr => pr.id === proposalId);
+    if (p) {
+        if (decision === 'approved') {
+            p.status = 'voting';
+            p.phase = 5;
+        } else if (decision === 'rejected') {
+            p.status = 'rejected';
+            p.phase = 4;
+        } else {
+            p.status = 'review';
+            p.phase = 4;
+        }
+    }
+
+    document.getElementById('expertJustification').value = '';
+    document.getElementById('expertDecision').value = '';
+    renderAll();
+
+    showToast(`<div style="color:var(--accent-green);font-weight:700;">Expert Review Submitted (Phase 4)</div><div style="font-size:0.82rem;">${proposalId}: ${decision}</div><div style="font-size:0.72rem;color:var(--text-muted);">TX: ${result.tx}</div>`);
+}
+
+// =============== PHASE 7: FEEDBACK ===============
+
+function setRating(value) {
+    selectedRating = value;
+    document.querySelectorAll('#starRating .star').forEach((star, i) => {
+        star.classList.toggle('filled', i < value);
+    });
+    const labels = ['', 'Poor', 'Below Average', 'Average', 'Good', 'Excellent'];
+    document.getElementById('ratingLabel').textContent = `${value}/5 - ${labels[value]}`;
+}
+
+function submitFeedback() {
+    if (!walletConnected) {
+        showToast(`<div style="color:var(--accent-yellow);font-weight:700;">Wallet Required</div><div style="font-size:0.82rem;">Connect wallet to submit feedback.</div>`);
+        return;
+    }
+
+    const projectId = document.getElementById('feedbackProjectSelect').value;
+    const text = document.getElementById('feedbackText').value.trim();
+
+    if (!projectId || selectedRating === 0) {
+        showToast(`<div style="color:var(--accent-yellow);font-weight:700;">Missing Fields</div><div style="font-size:0.82rem;">Select a project and provide a rating.</div>`);
+        return;
+    }
+
+    const result = contract.submitFeedback(projectId, selectedRating, text, currentCitizen.addr);
+    if (!result.success) {
+        showToast(`<div style="color:var(--accent-red);font-weight:700;">Error</div><div style="font-size:0.82rem;">${result.error}</div>`);
+        return;
+    }
+
+    citizenFeedback.unshift({
+        projectId, citizen: currentCitizen.name, addr: currentCitizen.addr,
+        rating: selectedRating, text,
+        time: "2026-03-19 " + new Date().toTimeString().slice(0, 5) + " UTC",
+        tx: result.tx
+    });
+
+    document.getElementById('feedbackText').value = '';
+    selectedRating = 0;
+    document.querySelectorAll('#starRating .star').forEach(s => s.classList.remove('filled'));
+    document.getElementById('ratingLabel').textContent = 'Select a rating (1 = Poor, 5 = Excellent)';
+
+    renderFeedback();
+    showToast(`<div style="color:var(--accent-green);font-weight:700;">Feedback Recorded On-Chain (Phase 7)</div><div style="font-size:0.82rem;">${projectId}: ${selectedRating || citizenFeedback[0].rating}/5 stars</div><div style="font-size:0.72rem;color:var(--text-muted);">TX: ${result.tx}</div>`);
+}
+
+// =============== RENDER FUNCTIONS ===============
+
+function renderRecentProposals() {
+    document.getElementById('recentProposalsTable').innerHTML = proposals.slice(0, 6).map(p => {
+        const isOwn = currentCitizen && (p.citizenAddr === currentCitizen.addr || p._realAddr === currentCitizen.addr);
+        const highlightStyle = p._isNew ? 'background:rgba(16,185,129,0.08);' : '';
+        return `
+        <tr style="${highlightStyle}">
+            <td style="font-weight:600;color:var(--accent-cyan)">${p.id}${isOwn ? '<br><span style="font-size:0.6rem;color:var(--accent-green);font-weight:700;">YOURS</span>' : ''}</td>
+            <td style="max-width:200px;">${p.title}</td>
+            <td>${citizenBadge(p.citizen, p.citizenAddr)}</td>
+            <td><span class="district-tag">${p.district}</span></td>
+            <td>${statusBadge(p.status)}</td>
+        </tr>`;
+    }).join('');
+}
+
+function renderProposals() {
+    const sf = document.getElementById('proposalStatusFilter').value;
+    const cf = document.getElementById('proposalCategoryFilter').value;
+    const df = document.getElementById('proposalDistrictFilter').value;
+    let filtered = proposals;
+    if (sf !== 'all') filtered = filtered.filter(p => p.status === sf);
+    if (cf !== 'all') filtered = filtered.filter(p => p.category === cf);
+    if (df !== 'all') filtered = filtered.filter(p => p.district === df);
+
+    document.getElementById('proposalsTable').innerHTML = filtered.map(p => {
+        const isOwn = currentCitizen && (p.citizenAddr === currentCitizen.addr || p._realAddr === currentCitizen.addr);
+        const highlightStyle = p._isNew ? 'background:rgba(16,185,129,0.08);border-left:3px solid var(--accent-green);' : '';
+        const phaseBadge = p.phase ? `<span class="phase-badge phase-${p.phase}" style="margin-left:0.3rem;">P${p.phase}</span>` : '';
+        return `
+        <tr style="${highlightStyle}">
+            <td style="font-weight:600;color:var(--accent-cyan)">${p.id}${isOwn ? '<br><span style="font-size:0.65rem;color:var(--accent-green);font-weight:700;">YOUR PROPOSAL</span>' : ''}</td>
+            <td style="max-width:220px;">${p.title}</td>
+            <td>${categoryBadge(p.category)}</td>
+            <td>${citizenBadge(p.citizen, p.citizenAddr)}</td>
+            <td><span class="district-tag">${p.district} - ${districts[p.district] ? districts[p.district].name : p.district}</span></td>
+            <td style="font-weight:600;">\u20AC${p.budget.toLocaleString()}</td>
+            <td>${statusBadge(p.status)}${phaseBadge}</td>
+            <td style="min-width:170px">${p.forVotes + p.againstVotes + p.abstainVotes > 0 ? voteBar(p.forVotes, p.againstVotes, p.abstainVotes) : '<span style="color:var(--text-muted);font-size:0.8rem;">Awaiting votes</span>'}</td>
+            <td><span class="tx-hash">${p.tx}</span></td>
+            <td><span class="immutable-icon">Immutable</span></td>
+        </tr>`;
+    }).join('');
+}
+
+function renderActiveVoting() {
+    const votingProposals = proposals.filter(p => p.status === 'voting');
+    document.getElementById('activeVoting').innerHTML = votingProposals.map(p => {
+        const total = p.forVotes + p.againstVotes + p.abstainVotes;
+        const isOwn = currentCitizen && (p.citizenAddr === currentCitizen.addr || p._realAddr === currentCitizen.addr);
+        const highlightBorder = p._isNew ? 'border-left:3px solid var(--accent-green);padding-left:1rem;background:rgba(16,185,129,0.05);border-radius:8px;' : '';
+        const districtLabel = districts[p.district] ? districts[p.district].name : p.district;
+        return `
+        <div style="margin-bottom:1.75rem;padding-bottom:1.75rem;border-bottom:1px solid var(--border);${highlightBorder}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;">
+                <div>
+                    <span style="font-weight:700;color:var(--accent-cyan);margin-right:0.5rem;">${p.id}</span>
+                    <span style="font-weight:600;">${p.title}</span>
+                    ${isOwn ? '<span class="badge badge-active" style="margin-left:0.5rem;font-size:0.65rem;">YOUR PROPOSAL</span>' : ''}
+                    <div style="margin-top:0.3rem;">
+                        ${categoryBadge(p.category)}
+                        <span class="district-tag" style="margin-left:0.3rem;">${p.district} - ${districtLabel}</span>
+                        <span style="font-size:0.75rem;color:var(--text-muted);margin-left:0.5rem;">Budget: \u20AC${p.budget.toLocaleString()}</span>
+                        <span style="font-size:0.75rem;color:var(--text-muted);margin-left:0.5rem;">By: ${p.citizen}</span>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.5rem;">
+                    <button class="btn-vote for" onclick="openVoteModal('${p.id}','for')">Vote For</button>
+                    <button class="btn-vote against" onclick="openVoteModal('${p.id}','against')">Vote Against</button>
+                    <button class="btn-vote abstain" onclick="openVoteModal('${p.id}','abstain')">Abstain</button>
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:1.5rem;margin-bottom:0.5rem;font-size:0.78rem;color:var(--text-muted);">
+                <span>Total: ${formatNum(total)} citizens voted</span>
+                <span>Participation: ${p.participation}%</span>
+                <span>Endorsements: ${p.endorsements}</span>
+                <span class="tx-hash">${p.tx}</span>
+            </div>
+            ${voteBar(p.forVotes, p.againstVotes, p.abstainVotes)}
+        </div>`;
+    }).join('');
+}
+
+function renderLiveVotes() {
+    const active = proposals.filter(p => p.status === 'voting');
+    document.getElementById('liveVoteTallies').innerHTML = active.slice(0, 6).map(p => {
+        const total = p.forVotes + p.againstVotes + p.abstainVotes;
+        const isOwn = currentCitizen && (p.citizenAddr === currentCitizen.addr || p._realAddr === currentCitizen.addr);
+        const highlightBorder = p._isNew ? 'border-left:3px solid var(--accent-green);padding-left:1rem;background:rgba(16,185,129,0.05);border-radius:8px;' : '';
+        return `
+        <div style="margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);${highlightBorder}">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;flex-wrap:wrap;gap:0.3rem;">
+                <div>
+                    <span style="font-weight:700;color:var(--accent-cyan);margin-right:0.5rem;">${p.id}</span>
+                    <span style="font-weight:600;">${p.title}</span>
+                    <span style="margin-left:0.5rem;">${categoryBadge(p.category)}</span>
+                    ${isOwn ? '<span class="badge badge-active" style="margin-left:0.5rem;font-size:0.65rem;">YOUR PROPOSAL</span>' : ''}
+                </div>
+                <div style="display:flex;align-items:center;gap:0.75rem;">
+                    <span style="font-size:0.78rem;color:var(--text-muted);">${formatNum(total)} citizens voted</span>
+                    <span style="font-size:0.78rem;color:var(--text-muted);">\u20AC${p.budget.toLocaleString()}</span>
+                    <span class="tx-hash">${p.tx}</span>
+                </div>
+            </div>
+            ${voteBar(p.forVotes, p.againstVotes, p.abstainVotes)}
+        </div>`;
+    }).join('');
+}
+
+function renderVotes() {
+    const voted = proposals.filter(p => p.forVotes + p.againstVotes + p.abstainVotes > 0);
+    document.getElementById('votesTable').innerHTML = voted.map(p => {
+        const total = p.forVotes + p.againstVotes + p.abstainVotes;
+        return `<tr>
+            <td><span style="font-weight:600;color:var(--accent-cyan)">${p.id}</span><br><span style="font-size:0.75rem;color:var(--text-muted)">${p.title}</span></td>
+            <td style="color:var(--accent-green)">${formatNum(p.forVotes)}</td>
+            <td style="color:var(--accent-red)">${formatNum(p.againstVotes)}</td>
+            <td style="color:var(--text-muted)">${formatNum(p.abstainVotes)}</td>
+            <td>${p.participation}%</td>
+            <td>${statusBadge(p.status)}</td>
+            <td style="min-width:170px">${voteBar(p.forVotes, p.againstVotes, p.abstainVotes)}</td>
+            <td><span class="tx-hash">${p.tx}</span></td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('individualVotesTable').innerHTML = individualVotes.map(v => `
+        <tr>
+            <td>${citizenBadge(v.citizen, v.addr)}</td>
+            <td><span class="district-tag">${v.district}</span></td>
+            <td style="font-weight:600;color:var(--accent-cyan)">${v.proposal}</td>
+            <td><span class="badge badge-${v.vote === 'For' ? 'active' : v.vote === 'Against' ? 'rejected' : 'pending'}">${v.vote}</span></td>
+            <td style="font-size:0.78rem;color:var(--text-muted)">${v.time}</td>
+            <td><span class="tx-hash">${v.tx}</span></td>
+        </tr>
+    `).join('');
+}
+
+function renderBudgetSliders() {
+    const totalBudget = 4800000;
+    document.getElementById('budgetSliders').innerHTML = fundCategories.map((c, i) => `
+        <div class="budget-slider-row">
+            <div class="budget-slider-label" style="color:${c.color}">${c.name}</div>
+            <div class="budget-slider-bar">
+                <input type="range" min="0" max="40" value="${Math.round(c.pct)}" id="slider-${i}" oninput="updateSlider(${i})">
+            </div>
+            <div class="budget-slider-pct" id="slider-pct-${i}">${Math.round(c.pct)}%</div>
+            <div class="budget-slider-value" id="slider-val-${i}">$${(totalBudget * c.pct / 100 / 1000).toFixed(0)}K</div>
+        </div>
+    `).join('');
+}
+
+function updateSlider(idx) {
+    const val = document.getElementById(`slider-${idx}`).value;
+    document.getElementById(`slider-pct-${idx}`).textContent = val + '%';
+    document.getElementById(`slider-val-${idx}`).textContent = '$' + (4800000 * val / 100 / 1000).toFixed(0) + 'K';
+
+    let total = 0;
+    fundCategories.forEach((_, i) => {
+        total += parseInt(document.getElementById(`slider-${i}`).value);
+    });
+    const label = document.getElementById('budgetTotalLabel');
+    label.textContent = `Total: ${total}%`;
+    label.style.color = total === 100 ? 'var(--accent-green)' : total > 100 ? 'var(--accent-red)' : 'var(--text-primary)';
+}
+
+function renderDonut() {
+    const donut = document.getElementById('donutChart');
+    let cumulativePct = 0;
+    const gradientParts = [];
+    fundCategories.forEach(c => {
+        gradientParts.push(`${c.color} ${cumulativePct}% ${cumulativePct + c.pct}%`);
+        cumulativePct += c.pct;
+    });
+    donut.style.background = `conic-gradient(${gradientParts.join(', ')})`;
+    donut.innerHTML = `<div class="donut-center"><span class="value">$3.2M</span><span class="label">Citizen<br>Allocated</span></div>`;
+
+    document.getElementById('donutLegend').innerHTML = fundCategories.map(c =>
+        `<div class="legend-item"><div class="legend-dot" style="background:${c.color}"></div><span>${c.name}: $${(c.amount / 1e3).toFixed(0)}K (${c.pct}%)</span></div>`
+    ).join('');
+
+    document.getElementById('allocBar').innerHTML = fundCategories.map(c =>
+        `<div class="alloc-segment" style="width:${c.pct}%;background:${c.color};" title="${c.name}: ${c.pct}%">${c.pct > 9 ? c.name.split(' ')[0] : ''}</div>`
+    ).join('');
+}
+
+function renderBudget() {
+    const typeFilter = document.getElementById('budgetTypeFilter').value;
+    let filtered = budgetTransactions;
+    if (typeFilter !== 'all') filtered = filtered.filter(t => t.type === typeFilter);
+
+    document.getElementById('budgetTable').innerHTML = filtered.map(t => {
+        const typeColor = t.type === 'allocation' ? 'var(--accent-blue)' : t.type === 'disbursement' ? 'var(--accent-yellow)' : 'var(--accent-green)';
+        return `<tr>
+            <td style="font-size:0.8rem;color:var(--text-muted)">${t.date}</td>
+            <td><span class="badge" style="background:${typeColor}20;color:${typeColor}">${t.type}</span></td>
+            <td style="font-weight:600;color:var(--accent-cyan)">${t.proposal}</td>
+            <td style="font-size:0.8rem">${t.recipient}</td>
+            <td style="font-weight:600;color:${t.amount >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">
+                ${t.amount >= 0 ? '+' : ''}$${Math.abs(t.amount).toLocaleString()}
+            </td>
+            <td style="font-size:0.8rem">$${t.balance.toLocaleString()}</td>
+            <td><span class="tx-hash">${t.tx}</span></td>
+            <td><span class="immutable-icon">Immutable</span></td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('budgetAllocations').innerHTML = fundCategories.map(c => `
+        <div style="margin-bottom:1.25rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;">
+                <span style="font-size:0.85rem;font-weight:600;color:${c.color}">${c.name}</span>
+                <span style="font-size:0.8rem;color:var(--text-muted);">$${(c.amount / 1e3).toFixed(0)}K (${c.pct}%)</span>
+            </div>
+            <div class="progress-container">
+                <div class="progress-fill" style="width:${c.pct * 2.5}%;background:${c.color};max-width:100%;"></div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderDistrictParticipation() {
+    document.getElementById('districtParticipation').innerHTML = Object.entries(districts).map(([key, d]) => `
+        <div style="margin-bottom:1rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;">
+                <span style="font-size:0.85rem;font-weight:600;">${key} - ${d.name}</span>
+                <span style="font-size:0.8rem;color:var(--text-muted);">${formatNum(d.citizens)} citizens | ${d.participation}% participation</span>
+            </div>
+            <div class="progress-container">
+                <div class="progress-fill" style="width:${d.participation}%;background:${d.participation >= 75 ? 'var(--accent-green)' : d.participation >= 60 ? 'var(--accent-yellow)' : 'var(--accent-red)'};"></div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderLifecycle() {
+    const filter = document.getElementById('lifecycleFilter').value;
+    const filtered = filter === 'all' ? projects : projects.filter(p => p.id === filter);
+
+    // Populate filter dropdown
+    const sel = document.getElementById('lifecycleFilter');
+    if (sel.options.length <= 1) {
+        projects.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.textContent = `${p.id}: ${p.name}`;
+            sel.appendChild(opt);
+        });
+    }
+
+    document.getElementById('lifecycleTimeline').innerHTML = filtered.map(proj => `
+        <div style="margin-bottom:2rem;">
+            <h3 style="font-size:1rem;margin-bottom:0.5rem;color:var(--accent-cyan);">${proj.id}: ${proj.name}</h3>
+            <div style="margin-bottom:1rem;"><span class="district-tag">${proj.district} - ${districts[proj.district].name}</span> <span style="margin-left:0.5rem;">${statusBadge(proj.phase === 'Completed' ? 'completed' : proj.phase === 'In Progress' ? 'active' : 'review')}</span></div>
+            <div class="timeline">
+                ${proj.events.map(e => `
+                    <div class="timeline-item">
+                        <div class="timeline-dot ${e.dot}"></div>
+                        <div class="timeline-date">${e.date}</div>
+                        <div class="timeline-title">${e.title}</div>
+                        <div class="timeline-desc">${e.desc}</div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+
+    document.getElementById('lifecycleTable').innerHTML = projects.map(p => `
+        <tr>
+            <td style="font-weight:600;color:var(--accent-cyan)">${p.id}</td>
+            <td>${p.name}</td>
+            <td><span class="district-tag">${p.district}</span></td>
+            <td>${statusBadge(p.phase === 'Completed' ? 'completed' : p.phase === 'In Progress' ? 'active' : p.phase === 'Research' ? 'review' : 'pending')}<span style="margin-left:0.4rem;font-size:0.8rem;">${p.phase}</span></td>
+            <td style="min-width:140px;">
+                <div style="display:flex;align-items:center;gap:0.5rem;">
+                    <div class="progress-container" style="flex:1;">
+                        <div class="progress-fill" style="width:${p.progress}%;background:${p.progress >= 75 ? 'var(--accent-green)' : p.progress >= 50 ? 'var(--accent-yellow)' : 'var(--accent-blue)'};"></div>
+                    </div>
+                    <span style="font-size:0.75rem;color:var(--text-muted)">${p.progress}%</span>
+                </div>
+            </td>
+            <td style="font-size:0.8rem">${p.budgetUsed}</td>
+            <td style="font-size:0.8rem">${p.milestones}</td>
+            <td><span class="tx-hash">${p.lastTx}</span></td>
+        </tr>
+    `).join('');
+}
+
+function renderAudit() {
+    const typeFilter = document.getElementById('auditTypeFilter').value;
+    const dateFilter = document.getElementById('auditDateFilter').value;
+    let filtered = auditEvents;
+    if (typeFilter !== 'all') filtered = filtered.filter(e => e.type === typeFilter);
+    if (dateFilter) filtered = filtered.filter(e => e.time.startsWith(dateFilter));
+
+    const typeColors = {
+        proposal: 'var(--accent-purple)',
+        vote: 'var(--accent-blue)',
+        budget: 'var(--accent-yellow)',
+        execution: 'var(--accent-green)',
+        milestone: 'var(--accent-cyan)',
+        discussion: 'var(--accent-teal)',
+        expert: 'var(--accent-orange)',
+        feedback: '#ec4899',
+        phase: 'var(--accent-purple)',
+    };
+
+    document.getElementById('auditLog').innerHTML = filtered.map(e => `
+        <div class="audit-entry">
+            <div class="audit-type" style="color:${typeColors[e.type]}">${e.type}</div>
+            <div class="audit-details">
+                <div class="audit-msg">${e.msg}</div>
+                <div class="audit-meta">${e.meta} | <span class="tx-hash">${e.tx}</span> | ${e.time}</div>
+            </div>
+            <div class="immutable-icon" style="white-space:nowrap;">On-Chain</div>
+        </div>
+    `).join('');
+}
+
+function verifyRecord() {
+    const input = document.getElementById('verifyInput').value.trim();
+    const result = document.getElementById('verifyResult');
+    if (!input) {
+        result.innerHTML = '<span style="color:var(--accent-red);font-size:0.85rem;">Please enter a transaction hash.</span>';
+        return;
+    }
+
+    const found = [...proposals.map(p => ({ tx: p.tx, type: 'Citizen Proposal', detail: `${p.id}: ${p.title} (by ${p.citizen}, ${p.district})` })),
+        ...budgetTransactions.map(t => ({ tx: t.tx, type: 'Budget Transaction', detail: `${t.type} of $${Math.abs(t.amount).toLocaleString()} for ${t.proposal}` })),
+        ...individualVotes.map(v => ({ tx: v.tx, type: 'Citizen Vote', detail: `${v.citizen} (${v.district}) voted ${v.vote} on ${v.proposal}` }))
+    ].find(r => r.tx === input || input.includes(r.tx.split('...')[0]));
+
+    if (found) {
+        result.innerHTML = `
+            <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:1rem;">
+                <div style="color:var(--accent-green);font-weight:700;margin-bottom:0.5rem;">Record Verified On-Chain</div>
+                <div style="font-size:0.85rem;"><strong>Type:</strong> ${found.type}</div>
+                <div style="font-size:0.85rem;"><strong>Details:</strong> ${found.detail}</div>
+                <div style="font-size:0.85rem;"><strong>TX Hash:</strong> <span class="tx-hash">${found.tx}</span></div>
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.5rem;">This participatory budgeting record is immutable on the Polygon blockchain. It cannot be altered, deleted, or tampered with by any party.</div>
+            </div>`;
+    } else {
+        result.innerHTML = `
+            <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:1rem;">
+                <div style="color:var(--accent-yellow);font-weight:700;margin-bottom:0.3rem;">Record Not Found</div>
+                <div style="font-size:0.85rem;">No participatory budgeting record found for: <span class="tx-hash">${input}</span></div>
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.3rem;">Ensure the transaction hash is correct and corresponds to a citizen action on this platform.</div>
+            </div>`;
+    }
+}
+
+// =============== TAB NAVIGATION ===============
+
+function switchTab(tabName) {
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    document.getElementById(`tab-${tabName}`).classList.add('active');
+}
+
+document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+});
+
+// =============== GLOBAL SEARCH ===============
+
+document.getElementById('globalSearch').addEventListener('input', function(e) {
+    const q = e.target.value.toLowerCase();
+    if (!q) return;
+    const match = proposals.find(p =>
+        p.id.toLowerCase().includes(q) ||
+        p.title.toLowerCase().includes(q) ||
+        p.citizen.toLowerCase().includes(q)
+    );
+    if (match) switchTab('proposals');
+});
+
+// =============== LIVE BLOCK SIMULATION ===============
+
+setInterval(() => {
+    const el = document.getElementById('blockNumber');
+    const current = parseInt(el.textContent.replace(/,/g, ''));
+    el.textContent = (current + 1).toLocaleString();
+}, 2000); // Polygon ~2s block time
+
+// =============== INIT ===============
+
+// =============== DEMOGRAPHICS DATA & RENDERING ===============
+
+const demographicsAge = [
+    { group: "18-24", total: 1914, male: 978, female: 898, other: 38, participation: 52 },
+    { group: "25-34", total: 3029, male: 1423, female: 1545, other: 61, participation: 68 },
+    { group: "35-44", total: 3189, male: 1498, female: 1627, other: 64, participation: 78 },
+    { group: "45-54", total: 2871, male: 1349, female: 1465, other: 57, participation: 82 },
+    { group: "55-64", total: 2393, male: 1124, female: 1221, other: 48, participation: 79 },
+    { group: "65-74", total: 1595, male: 749, female: 822, other: 24, participation: 71 },
+    { group: "75+",   total: 956,  male: 374,  female: 554, other: 28, participation: 58 },
+];
+
+const genderParticipation = [
+    { label: "Male",   registered: 7495, voted: 5396, pct: 72.0, color: "#3b82f6" },
+    { label: "Female", registered: 8132, voted: 6099, pct: 75.0, color: "#ec4899" },
+    { label: "Other",  registered: 320,  voted: 211,  pct: 65.9, color: "#a78bfa" },
+];
+
+const countyGenderData = [
+    { county: "Harju",      male: 2261, female: 2407, other: 144 },
+    { county: "Tartu",      male: 1028, female: 1094, other: 65 },
+    { county: "Ida-Viru",   male: 716,  female: 761,  other: 46 },
+    { county: "Pärnu",      male: 585,  female: 623,  other: 37 },
+    { county: "Lääne-Viru", male: 387,  female: 412,  other: 25 },
+    { county: "Viljandi",   male: 319,  female: 339,  other: 20 },
+    { county: "Rapla",      male: 251,  female: 267,  other: 16 },
+    { county: "Võru",       male: 251,  female: 267,  other: 16 },
+    { county: "Saare",      male: 245,  female: 261,  other: 15 },
+    { county: "Järva",      male: 241,  female: 256,  other: 15 },
+    { county: "Jõgeva",     male: 229,  female: 244,  other: 14 },
+    { county: "Valga",      male: 206,  female: 219,  other: 13 },
+    { county: "Põlva",      male: 194,  female: 206,  other: 12 },
+    { county: "Lääne",      male: 187,  female: 199,  other: 12 },
+    { county: "Hiiu",       male: 161,  female: 171,  other: 10 },
+];
+
+function renderDemographics() {
+    // Gender Donut
+    const gDonut = document.getElementById('genderDonut');
+    gDonut.style.background = 'conic-gradient(#3b82f6 0% 47%, #ec4899 47% 98%, #a78bfa 98% 100%)';
+    gDonut.innerHTML = '<div class="donut-center"><span class="value">15,947</span><span class="label">Citizens</span></div>';
+
+    document.getElementById('genderLegend').innerHTML = [
+        { label: 'Male', count: '7,495', pct: '47.0%', color: '#3b82f6' },
+        { label: 'Female', count: '8,132', pct: '51.0%', color: '#ec4899' },
+        { label: 'Non-Binary / Other', count: '320', pct: '2.0%', color: '#a78bfa' },
+    ].map(g => `<div class="legend-item"><div class="legend-dot" style="background:${g.color}"></div><span>${g.label}: ${g.count} (${g.pct})</span></div>`).join('');
+
+    // Age Distribution Horizontal Bar Chart
+    const maxTotal = Math.max(...demographicsAge.map(d => d.total));
+    document.getElementById('ageDistribution').innerHTML = `
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:1rem;">Citizens by age group with participation rate</div>
+        ${demographicsAge.map(d => {
+            const barW = (d.total / maxTotal * 100).toFixed(1);
+            return `
+            <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.85rem;">
+                <div style="min-width:50px;font-size:0.82rem;font-weight:600;text-align:right;">${d.group}</div>
+                <div style="flex:1;position:relative;">
+                    <div style="display:flex;height:28px;border-radius:6px;overflow:hidden;background:var(--bg-primary);">
+                        <div style="width:${(d.male/d.total*barW).toFixed(1)}%;background:#3b82f6;transition:width 0.5s;"></div>
+                        <div style="width:${(d.female/d.total*barW).toFixed(1)}%;background:#ec4899;transition:width 0.5s;"></div>
+                        <div style="width:${(d.other/d.total*barW).toFixed(1)}%;background:#a78bfa;transition:width 0.5s;"></div>
+                    </div>
+                </div>
+                <div style="min-width:55px;text-align:right;font-size:0.82rem;font-weight:700;color:var(--accent-cyan);">${formatNum(d.total)}</div>
+                <div style="min-width:40px;text-align:right;font-size:0.72rem;color:${d.participation >= 75 ? 'var(--accent-green)' : d.participation >= 60 ? 'var(--accent-yellow)' : 'var(--accent-red)'};">${d.participation}%</div>
+            </div>`;
+        }).join('')}
+        <div style="display:flex;align-items:center;gap:1rem;margin-top:0.75rem;font-size:0.72rem;color:var(--text-muted);">
+            <span><span style="display:inline-block;width:10px;height:10px;background:#3b82f6;border-radius:2px;margin-right:4px;"></span>Male</span>
+            <span><span style="display:inline-block;width:10px;height:10px;background:#ec4899;border-radius:2px;margin-right:4px;"></span>Female</span>
+            <span><span style="display:inline-block;width:10px;height:10px;background:#a78bfa;border-radius:2px;margin-right:4px;"></span>Other</span>
+            <span style="margin-left:auto;">Right column = participation rate</span>
+        </div>
+    `;
+
+    // Population Pyramid
+    const maxGender = Math.max(...demographicsAge.map(d => Math.max(d.male, d.female)));
+    document.getElementById('populationPyramid').innerHTML = `
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:1rem;">Male (left) vs Female (right) by age group</div>
+        <div style="display:flex;font-size:0.68rem;color:var(--text-muted);margin-bottom:0.5rem;">
+            <div style="flex:1;text-align:left;font-weight:600;color:#3b82f6;">Male</div>
+            <div style="width:60px;text-align:center;font-weight:600;">Age</div>
+            <div style="flex:1;text-align:right;font-weight:600;color:#ec4899;">Female</div>
+        </div>
+        ${[...demographicsAge].reverse().map(d => {
+            const maleW = (d.male / maxGender * 100).toFixed(1);
+            const femaleW = (d.female / maxGender * 100).toFixed(1);
+            return `
+            <div style="display:flex;align-items:center;gap:0;margin-bottom:0.4rem;height:26px;">
+                <div style="flex:1;display:flex;justify-content:flex-end;align-items:center;gap:0.4rem;">
+                    <span style="font-size:0.72rem;color:var(--text-muted);">${formatNum(d.male)}</span>
+                    <div style="width:${maleW}%;height:22px;background:linear-gradient(90deg,rgba(59,130,246,0.3),#3b82f6);border-radius:4px 0 0 4px;transition:width 0.5s;min-width:2px;"></div>
+                </div>
+                <div style="width:60px;text-align:center;font-size:0.78rem;font-weight:700;color:var(--text-primary);">${d.group}</div>
+                <div style="flex:1;display:flex;align-items:center;gap:0.4rem;">
+                    <div style="width:${femaleW}%;height:22px;background:linear-gradient(90deg,#ec4899,rgba(236,72,153,0.3));border-radius:0 4px 4px 0;transition:width 0.5s;min-width:2px;"></div>
+                    <span style="font-size:0.72rem;color:var(--text-muted);">${formatNum(d.female)}</span>
+                </div>
+            </div>`;
+        }).join('')}
+    `;
+
+    // Participation by Gender
+    document.getElementById('participationByGender').innerHTML = `
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:1.25rem;">Voting participation rate by gender identity</div>
+        ${genderParticipation.map(g => `
+            <div style="margin-bottom:1.5rem;">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.4rem;">
+                    <span style="font-size:0.9rem;font-weight:700;color:${g.color};">${g.label}</span>
+                    <span style="font-size:0.82rem;color:var(--text-muted);">${formatNum(g.voted)} / ${formatNum(g.registered)} voted</span>
+                </div>
+                <div style="position:relative;height:32px;background:var(--bg-primary);border-radius:8px;overflow:hidden;">
+                    <div style="height:100%;width:${g.pct}%;background:${g.color};border-radius:8px;display:flex;align-items:center;justify-content:center;transition:width 0.6s;">
+                        <span style="font-size:0.82rem;font-weight:700;color:white;">${g.pct}%</span>
+                    </div>
+                </div>
+            </div>
+        `).join('')}
+        <div style="margin-top:1.5rem;padding:1rem;background:var(--bg-primary);border-radius:8px;">
+            <div style="font-size:0.78rem;font-weight:600;margin-bottom:0.5rem;">Gender Parity Index</div>
+            <div style="display:flex;align-items:center;gap:1rem;">
+                <div style="flex:1;">
+                    <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;">
+                        <div style="width:46%;background:#3b82f6;"></div>
+                        <div style="width:52%;background:#ec4899;"></div>
+                        <div style="width:2%;background:#a78bfa;"></div>
+                    </div>
+                </div>
+                <div style="font-size:0.85rem;font-weight:700;color:var(--accent-green);">0.96</div>
+                <div style="font-size:0.7rem;color:var(--text-muted);">Near parity</div>
+            </div>
+        </div>
+    `;
+
+    // Participation by Age
+    document.getElementById('participationByAge').innerHTML = `
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:1rem;">Voter turnout by age bracket</div>
+        ${demographicsAge.map(d => {
+            const barColor = d.participation >= 80 ? '#10b981' : d.participation >= 70 ? '#3b82f6' : d.participation >= 60 ? '#f59e0b' : '#ef4444';
+            return `
+            <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
+                <div style="min-width:50px;font-size:0.82rem;font-weight:600;text-align:right;">${d.group}</div>
+                <div style="flex:1;position:relative;height:26px;background:var(--bg-primary);border-radius:6px;overflow:hidden;">
+                    <div style="height:100%;width:${d.participation}%;background:${barColor};border-radius:6px;transition:width 0.5s;display:flex;align-items:center;padding-left:0.5rem;">
+                        ${d.participation >= 30 ? `<span style="font-size:0.72rem;font-weight:700;color:white;">${d.participation}%</span>` : ''}
+                    </div>
+                </div>
+                ${d.participation < 30 ? `<span style="font-size:0.72rem;font-weight:600;color:${barColor};">${d.participation}%</span>` : ''}
+                <div style="min-width:85px;text-align:right;">
+                    <span style="font-size:0.72rem;color:var(--text-muted);">${formatNum(Math.round(d.total * d.participation / 100))} / ${formatNum(d.total)}</span>
+                </div>
+            </div>`;
+        }).join('')}
+        <div style="display:flex;gap:1rem;margin-top:1rem;font-size:0.7rem;color:var(--text-muted);">
+            <span><span style="display:inline-block;width:10px;height:10px;background:#10b981;border-radius:2px;margin-right:3px;"></span>80%+</span>
+            <span><span style="display:inline-block;width:10px;height:10px;background:#3b82f6;border-radius:2px;margin-right:3px;"></span>70-79%</span>
+            <span><span style="display:inline-block;width:10px;height:10px;background:#f59e0b;border-radius:2px;margin-right:3px;"></span>60-69%</span>
+            <span><span style="display:inline-block;width:10px;height:10px;background:#ef4444;border-radius:2px;margin-right:3px;"></span>&lt;60%</span>
+        </div>
+    `;
+
+    // Gender by County
+    document.getElementById('genderByCounty').innerHTML = `
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:1rem;">Male / Female / Other distribution across Estonian counties</div>
+        ${countyGenderData.map(c => {
+            const total = c.male + c.female + c.other;
+            const mPct = (c.male / total * 100).toFixed(0);
+            const fPct = (c.female / total * 100).toFixed(0);
+            return `
+            <div style="margin-bottom:0.7rem;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.2rem;">
+                    <span style="font-size:0.8rem;font-weight:600;">${c.county}</span>
+                    <span style="font-size:0.7rem;color:var(--text-muted);">${formatNum(total)} citizens</span>
+                </div>
+                <div style="display:flex;height:16px;border-radius:4px;overflow:hidden;">
+                    <div style="width:${mPct}%;background:#3b82f6;" title="Male ${mPct}%"></div>
+                    <div style="width:${fPct}%;background:#ec4899;" title="Female ${fPct}%"></div>
+                    <div style="width:${100 - mPct - fPct}%;background:#a78bfa;" title="Other"></div>
+                </div>
+            </div>`;
+        }).join('')}
+        <div style="display:flex;gap:1rem;margin-top:0.75rem;font-size:0.7rem;color:var(--text-muted);">
+            <span><span style="display:inline-block;width:10px;height:10px;background:#3b82f6;border-radius:2px;margin-right:3px;"></span>Male</span>
+            <span><span style="display:inline-block;width:10px;height:10px;background:#ec4899;border-radius:2px;margin-right:3px;"></span>Female</span>
+            <span><span style="display:inline-block;width:10px;height:10px;background:#a78bfa;border-radius:2px;margin-right:3px;"></span>Other</span>
+        </div>
+    `;
+}
+
+function updateStats() {
+    const totalProposals = proposals.length;
+    const activeVotes = proposals.filter(p => p.status === 'voting').length;
+    const totalVotes = individualVotes.length;
+    const approved = proposals.filter(p => p.status === 'approved' || p.status === 'funded' || p.status === 'completed').length;
+
+    // Overview stats
+    const elProp = document.getElementById('statProposals');
+    const elActive = document.getElementById('statActiveVotes');
+    const elRecords = document.getElementById('statRecords');
+    if (elProp) elProp.textContent = formatNum(totalProposals);
+    if (elActive) elActive.textContent = formatNum(activeVotes);
+    if (elRecords) elRecords.textContent = formatNum(auditEvents.length);
+
+    // Votes tab stats
+    const elTotalVotes = document.getElementById('statTotalVotes');
+    const elParticipation = document.getElementById('statParticipation');
+    const elApproved = document.getElementById('statApproved');
+    const elBudgetVotes = document.getElementById('statBudgetVotes');
+    if (elTotalVotes) elTotalVotes.textContent = formatNum(totalVotes);
+    if (elParticipation) {
+        const avgPart = proposals.filter(p => p.participation > 0);
+        const pct = avgPart.length > 0 ? (avgPart.reduce((s, p) => s + p.participation, 0) / avgPart.length).toFixed(1) : '0';
+        elParticipation.textContent = pct + '%';
+    }
+    if (elApproved) elApproved.textContent = formatNum(approved);
+    if (elBudgetVotes) elBudgetVotes.textContent = formatNum(activeVotes);
+
+    // Audit tab stats
+    const elAuditTotal = document.getElementById('statAuditTotal');
+    const elAuditProp = document.getElementById('statAuditProposals');
+    const elAuditVotes = document.getElementById('statAuditVotes');
+    const elAuditBudget = document.getElementById('statAuditBudget');
+    if (elAuditTotal) elAuditTotal.textContent = formatNum(auditEvents.length);
+    if (elAuditProp) elAuditProp.textContent = formatNum(auditEvents.filter(e => e.type === 'proposal').length);
+    if (elAuditVotes) elAuditVotes.textContent = formatNum(auditEvents.filter(e => e.type === 'vote').length);
+    if (elAuditBudget) elAuditBudget.textContent = formatNum(auditEvents.filter(e => e.type === 'budget').length);
+}
+
+// =============== DISCUSSION RENDERING (Phase 3) ===============
+
+function renderDiscussion() {
+    // Populate discussion filter and comment select dropdowns
+    const discussionFilter = document.getElementById('discussionFilter');
+    const commentSelect = document.getElementById('commentProposalSelect');
+
+    // Only rebuild options if empty
+    if (discussionFilter.options.length <= 1) {
+        proposals.forEach(p => {
+            const opt1 = document.createElement('option');
+            opt1.value = p.id; opt1.textContent = `${p.id}: ${p.title}`;
+            discussionFilter.appendChild(opt1);
+        });
+    }
+
+    // Always rebuild comment select
+    commentSelect.innerHTML = '<option value="">Select proposal to comment on...</option>';
+    proposals.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id; opt.textContent = `${p.id}: ${p.title}`;
+        commentSelect.appendChild(opt);
+    });
+
+    const filter = discussionFilter.value;
+
+    // Proposal cards for discussion
+    const discussable = filter === 'all' ? proposals : proposals.filter(p => p.id === filter);
+    document.getElementById('discussionProposals').innerHTML = discussable.map(p => {
+        const likes = proposalLikes[p.id] || 0;
+        const comments = discussionComments.filter(c => c.proposalId === p.id).length;
+        const phaseBadge = `<span class="phase-badge phase-${p.phase || 3}">Phase ${p.phase || 3}</span>`;
+        return `
+        <div style="padding:1rem;background:var(--bg-primary);border-radius:8px;margin-bottom:0.75rem;border-left:3px solid var(--accent-cyan);">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem;">
+                <div>
+                    <span style="font-weight:700;color:var(--accent-cyan);">${p.id}</span>
+                    <span style="font-weight:600;margin-left:0.5rem;">${p.title}</span>
+                    ${phaseBadge}
+                </div>
+                <div style="display:flex;gap:0.5rem;">
+                    <button class="like-btn" onclick="likeProposal('${p.id}')">&#9829; ${likes}</button>
+                </div>
+            </div>
+            <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem;">
+                ${categoryBadge(p.category)} <span class="district-tag">${p.district}</span>
+                <span style="margin-left:0.5rem;">\u20AC${p.budget.toLocaleString()}</span>
+                <span style="margin-left:0.5rem;">By: ${p.citizen}</span>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">
+                ${comments} comments | ${likes} likes | ${statusBadge(p.status)}
+            </div>
+        </div>`;
+    }).join('');
+
+    // Comments
+    const filteredComments = filter === 'all' ? discussionComments : discussionComments.filter(c => c.proposalId === filter);
+    document.getElementById('discussionComments').innerHTML = filteredComments.length === 0
+        ? '<div style="text-align:center;padding:2rem;color:var(--text-muted);">No comments yet. Be the first to discuss!</div>'
+        : filteredComments.map(c => `
+        <div class="comment-card">
+            <div class="comment-header">
+                <div>${citizenBadge(c.citizen, c.addr)} <span style="font-size:0.7rem;color:var(--accent-cyan);margin-left:0.3rem;">${c.proposalId}</span></div>
+                <div style="display:flex;align-items:center;gap:0.5rem;">
+                    <button class="like-btn" onclick="likeComment(${c.id})">&#9829; ${c.likes}</button>
+                    <span style="font-size:0.68rem;color:var(--text-muted);">${c.time}</span>
+                </div>
+            </div>
+            <div class="comment-body">${c.text}</div>
+            <div style="margin-top:0.4rem;font-size:0.68rem;color:var(--text-muted);">TX: <span class="tx-hash">${c.tx}</span></div>
+        </div>
+    `).join('');
+
+    // Update stats
+    const elComments = document.getElementById('statComments');
+    const elLikes = document.getElementById('statLikes');
+    const elDiscussions = document.getElementById('statDiscussions');
+    const elDiscPart = document.getElementById('statDiscParticipants');
+    if (elComments) elComments.textContent = formatNum(discussionComments.length);
+    if (elLikes) elLikes.textContent = formatNum(Object.values(proposalLikes).reduce((s, v) => s + v, 0));
+    if (elDiscussions) elDiscussions.textContent = formatNum(new Set(discussionComments.map(c => c.proposalId)).size);
+    if (elDiscPart) elDiscPart.textContent = formatNum(new Set(discussionComments.map(c => c.addr)).size);
+}
+
+// =============== EXPERT REVIEW RENDERING (Phase 4) ===============
+
+function renderExpertReviews() {
+    const statusFilter = document.getElementById('expertFilterStatus').value;
+
+    // Populate expert proposal select
+    const expertSelect = document.getElementById('expertProposalSelect');
+    if (expertSelect) {
+        expertSelect.innerHTML = '<option value="">Select proposal...</option>';
+        proposals.filter(p => p.status === 'discussion' || p.status === 'review').forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id; opt.textContent = `${p.id}: ${p.title}`;
+            expertSelect.appendChild(opt);
+        });
+    }
+
+    // Get proposals with reviews and pending ones
+    const allProposalIds = new Set(proposals.map(p => p.id));
+    const reviewedIds = new Set(expertReviews.map(r => r.proposalId));
+
+    let displayItems = [];
+
+    // Add reviewed proposals
+    expertReviews.forEach(r => {
+        if (statusFilter === 'all' || statusFilter === r.decision) {
+            displayItems.push({ ...r, hasReview: true });
+        }
+    });
+
+    // Add pending (unreviewed) proposals
+    if (statusFilter === 'all' || statusFilter === 'pending') {
+        proposals.filter(p => !reviewedIds.has(p.id) && (p.status === 'discussion' || p.status === 'review')).forEach(p => {
+            displayItems.push({ proposalId: p.id, decision: 'pending', hasReview: false, title: p.title });
+        });
+    }
+
+    document.getElementById('expertReviewsList').innerHTML = displayItems.length === 0
+        ? '<div style="text-align:center;padding:2rem;color:var(--text-muted);">No expert reviews match the current filter.</div>'
+        : displayItems.map(r => {
+            const p = proposals.find(pr => pr.id === r.proposalId);
+            const title = p ? p.title : r.title || r.proposalId;
+            const decisionColors = { approved: 'var(--accent-green)', rejected: 'var(--accent-red)', revision: 'var(--accent-yellow)', pending: 'var(--text-muted)' };
+            const decisionLabel = { approved: 'Approved', rejected: 'Rejected', revision: 'Revision Requested', pending: 'Pending Review' };
+
+            if (!r.hasReview) {
+                return `<div class="review-card pending-review">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div><span style="font-weight:700;color:var(--accent-cyan);">${r.proposalId}</span> <span style="font-weight:600;">${title}</span></div>
+                        <span class="badge badge-pending">Awaiting Expert Review</span>
+                    </div>
+                </div>`;
+            }
+
+            return `<div class="review-card ${r.decision}">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;">
+                    <div>
+                        <span style="font-weight:700;color:var(--accent-cyan);">${r.proposalId}</span>
+                        <span style="font-weight:600;margin-left:0.5rem;">${title}</span>
+                    </div>
+                    <span class="badge" style="background:${decisionColors[r.decision]}20;color:${decisionColors[r.decision]};">${decisionLabel[r.decision]}</span>
+                </div>
+                <div style="background:var(--bg-card);border-radius:6px;padding:0.75rem;margin-bottom:0.75rem;">
+                    <div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.5;">${r.justification}</div>
+                </div>
+                <div style="display:flex;gap:1.5rem;font-size:0.78rem;color:var(--text-muted);flex-wrap:wrap;">
+                    <span>Expert: ${citizenBadge(r.expert, r.expertAddr)}</span>
+                    <span>Feasibility: <strong>${r.feasibility}/10</strong></span>
+                    <span>Cost: <strong>${r.costAssessment}</strong></span>
+                    <span>${r.time}</span>
+                    <span>TX: <span class="tx-hash">${r.tx}</span></span>
+                </div>
+            </div>`;
+        }).join('');
+
+    // Stats
+    const elPending = document.getElementById('statPendingReviews');
+    const elApproved = document.getElementById('statExpertApproved');
+    const elRejected = document.getElementById('statExpertRejected');
+    if (elPending) elPending.textContent = proposals.filter(p => !reviewedIds.has(p.id) && (p.status === 'discussion' || p.status === 'review')).length;
+    if (elApproved) elApproved.textContent = expertReviews.filter(r => r.decision === 'approved').length;
+    if (elRejected) elRejected.textContent = expertReviews.filter(r => r.decision === 'rejected').length;
+}
+
+// =============== FEEDBACK RENDERING (Phase 7) ===============
+
+function renderFeedback() {
+    // Populate feedback project select (only completed/implemented projects)
+    const feedbackSelect = document.getElementById('feedbackProjectSelect');
+    if (feedbackSelect) {
+        feedbackSelect.innerHTML = '<option value="">Select completed project...</option>';
+        projects.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id; opt.textContent = `${p.id}: ${p.name}`;
+            feedbackSelect.appendChild(opt);
+        });
+        // Also include proposals with completed status
+        proposals.filter(p => p.status === 'completed' || p.status === 'funded').forEach(p => {
+            if (!projects.find(pr => pr.id === p.id)) {
+                const opt = document.createElement('option');
+                opt.value = p.id; opt.textContent = `${p.id}: ${p.title}`;
+                feedbackSelect.appendChild(opt);
+            }
+        });
+    }
+
+    // Feedback list
+    document.getElementById('feedbackList').innerHTML = citizenFeedback.length === 0
+        ? '<div style="text-align:center;padding:2rem;color:var(--text-muted);">No feedback yet. Rate completed projects to provide accountability data.</div>'
+        : citizenFeedback.map(f => {
+            const stars = Array.from({length: 5}, (_, i) => `<span style="color:${i < f.rating ? '#f59e0b' : 'var(--border)'};">&#9733;</span>`).join('');
+            return `
+            <div class="feedback-card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                    <div>
+                        <span style="font-weight:700;color:var(--accent-cyan);">${f.projectId}</span>
+                        <span style="margin-left:0.5rem;font-size:1.1rem;">${stars}</span>
+                    </div>
+                    <span style="font-size:0.68rem;color:var(--text-muted);">${f.time}</span>
+                </div>
+                <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.5rem;">${f.text || '<em>No comment provided</em>'}</div>
+                <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-muted);">
+                    <span>${citizenBadge(f.citizen, f.addr)}</span>
+                    <span>TX: <span class="tx-hash">${f.tx}</span></span>
+                </div>
+            </div>`;
+        }).join('');
+
+    // Satisfaction overview
+    const projectFeedback = {};
+    citizenFeedback.forEach(f => {
+        if (!projectFeedback[f.projectId]) projectFeedback[f.projectId] = [];
+        projectFeedback[f.projectId].push(f.rating);
+    });
+
+    document.getElementById('satisfactionOverview').innerHTML = Object.keys(projectFeedback).length === 0
+        ? '<div style="text-align:center;padding:1.5rem;color:var(--text-muted);">Submit feedback on completed projects to see satisfaction metrics.</div>'
+        : Object.entries(projectFeedback).map(([pid, ratings]) => {
+            const avg = (ratings.reduce((s, r) => s + r, 0) / ratings.length).toFixed(1);
+            const stars = Array.from({length: 5}, (_, i) => `<span style="color:${i < Math.round(avg) ? '#f59e0b' : 'var(--border)'};">&#9733;</span>`).join('');
+            const proj = projects.find(p => p.id === pid) || proposals.find(p => p.id === pid);
+            const name = proj ? (proj.name || proj.title) : pid;
+            return `
+            <div style="display:flex;align-items:center;gap:1rem;padding:0.75rem 0;border-bottom:1px solid var(--border);">
+                <span style="font-weight:700;color:var(--accent-cyan);min-width:80px;">${pid}</span>
+                <span style="flex:1;font-size:0.85rem;">${name}</span>
+                <span style="font-size:1.1rem;">${stars}</span>
+                <span style="font-weight:700;min-width:40px;text-align:right;">${avg}</span>
+                <span style="font-size:0.72rem;color:var(--text-muted);min-width:70px;">${ratings.length} ratings</span>
+            </div>`;
+        }).join('');
+
+    // Stats
+    const totalFeedback = citizenFeedback.length;
+    const avgRating = totalFeedback > 0 ? (citizenFeedback.reduce((s, f) => s + f.rating, 0) / totalFeedback).toFixed(1) : '-';
+    const satisfaction = totalFeedback > 0 ? Math.round(citizenFeedback.filter(f => f.rating >= 4).length / totalFeedback * 100) + '%' : '-';
+
+    const elTotal = document.getElementById('statFeedbackTotal');
+    const elAvg = document.getElementById('statAvgRating');
+    const elCompleted = document.getElementById('statCompletedProjects');
+    const elSat = document.getElementById('statSatisfaction');
+    if (elTotal) elTotal.textContent = totalFeedback;
+    if (elAvg) elAvg.textContent = avgRating;
+    if (elCompleted) elCompleted.textContent = projects.length;
+    if (elSat) elSat.textContent = satisfaction;
+}
+
+function renderAll() {
+    renderRecentProposals();
+    renderProposals();
+    renderActiveVoting();
+    renderVotes();
+    renderLiveVotes();
+    renderDonut();
+    renderBudgetSliders();
+    renderBudget();
+    renderDistrictParticipation();
+    renderLifecycle();
+    renderDiscussion();
+    renderExpertReviews();
+    renderFeedback();
+    renderDemographics();
+    renderAudit();
+    updateStats();
+}
+
+renderAll();
+</script>
+</body>
+</html>
